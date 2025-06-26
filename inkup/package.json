@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
-    "@prisma/client": "^6.10.1",
     "framer-motion": "^12.19.1",
     "gsap": "^3.13.0",
     "lucide-react": "^0.523.0",
@@ -27,7 +26,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
-    "prisma": "^6.10.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

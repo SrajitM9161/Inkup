@@ -3,21 +3,12 @@
 import { motion, useAnimation } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-
+import { bgColors } from '../Constants/constant';
 export default function Card({ offsetX, offsetY, rotate, index, img }: any) {
   const controls = useAnimation();
   const [spread, setSpread] = useState(false);
-  const [initialX] = useState(() => Math.random() * 60 - 30);
+  const [visible, setVisible] = useState(false);
   const [initialRotate] = useState(() => Math.random() * 20 - 10);
-
-   const bgColors = [
-    'bg-[#2ADBC1]',  // Card 1
-    'bg-[#601F1F]',  // Card 2
-    'bg-[#D88A0D]',  // Card 3
-    'bg-[#601F1F]',  // Card 4
-    'bg-[#893333]',  // Card 5
-    'bg-[#2ADBC1]',  // Card 6
-  ];
 
   useEffect(() => {
     controls.set({
@@ -28,6 +19,8 @@ export default function Card({ offsetX, offsetY, rotate, index, img }: any) {
       scale: 0.9,
     });
 
+    setTimeout(() => setVisible(true), 10);
+
     controls
       .start({
         x: -110,
@@ -37,13 +30,14 @@ export default function Card({ offsetX, offsetY, rotate, index, img }: any) {
         rotate: initialRotate,
         transition: {
           type: 'spring',
-          bounce: 0.4,
-          delay: 0.2,
-          duration: 1.2,
+          stiffness: 160,
+          damping: 20,
+          delay: 0.1 + index * 0.03,
+          duration: 0.6,
         },
       })
       .then(() => {
-        setTimeout(() => setSpread(true), 900);
+        setTimeout(() => setSpread(true), 500);
       });
   }, []);
 
@@ -54,9 +48,9 @@ export default function Card({ offsetX, offsetY, rotate, index, img }: any) {
         y: offsetY,
         rotate,
         transition: {
-          delay: index * 0.03,
-          duration: 0.8,
-          ease: [0.25, 1, 0.5, 1],
+          delay: 0,
+          duration: 0.6,
+          ease: 'easeInOut',
         },
       });
     }
@@ -65,8 +59,12 @@ export default function Card({ offsetX, offsetY, rotate, index, img }: any) {
   return (
     <motion.div
       animate={controls}
+      initial={false} 
       className={`absolute top-[290px] left-1/2 w-[160px] h-[220px] border-[2px] border-[#F8F8F8] shadow-[1px_2px_20px_rgba(248,248,248,0.6)] rounded-[18px] overflow-hidden ${bgColors[index]}`}
-      style={{ transform: 'translateX(-50%)' }}
+      style={{
+        transform: 'translateX(-50%)',
+        visibility: visible ? 'visible' : 'hidden',
+      }}
     >
       <Image
         src={img}
@@ -74,6 +72,7 @@ export default function Card({ offsetX, offsetY, rotate, index, img }: any) {
         width={160}
         height={220}
         className="object-cover w-full h-full"
+        priority
       />
     </motion.div>
   );
