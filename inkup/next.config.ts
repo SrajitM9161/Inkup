@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async rewrites() {
+    return [
+      {
+        source: "/auth/:path*",                  // Match all /auth routes
+        destination: "http://localhost:3000*", // Proxy to Express backend
+      },
+    ];
+  },
 };
 
 export default nextConfig;

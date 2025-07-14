@@ -1,9 +1,7 @@
 import 'dotenv/config';
 
 import app from './app.js';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../prisma/prismaClient.js';
 
 const PORT = process.env.PORT || 5000;
 
@@ -13,7 +11,7 @@ async function startServer() {
     console.log('Prisma connected successfully');
 
     app.listen(PORT, () => {
-      console.log(`🚀 Server running at http://localhost:${PORT}`);
+      console.log(`Server running at http://localhost:${PORT}`);
     });
   } catch (error) {
     console.error('Error starting server:', error);
