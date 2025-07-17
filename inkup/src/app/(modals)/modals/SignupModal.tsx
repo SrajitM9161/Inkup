@@ -11,21 +11,23 @@ import SignupStepperForm from './TattooStepperForm';
 export default function SignupModal({
   isOpen,
   onClose,
+  onSubmit,
+  onSuccess,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit: (data: { token: string }) => void;
+  onSuccess?: () => void;
 }) {
   const [showEmailForm, setShowEmailForm] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) {
-      setShowEmailForm(false); 
-    }
+    if (!isOpen) setShowEmailForm(false);
   }, [isOpen]);
 
   const handleClose = () => {
-    setShowEmailForm(false); 
-    onClose();              
+    setShowEmailForm(false);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -46,19 +48,37 @@ export default function SignupModal({
         </h2>
 
         {showEmailForm ? (
-          <SignupStepperForm />
+          <SignupStepperForm
+            onSubmit={({ token }) => {
+              localStorage.setItem('token', token);
+              onSubmit({ token });
+              setTimeout(() => {
+                onSuccess?.();
+              }, 200); // ensure token is saved before refresh
+            }}
+          />
         ) : (
           <div className="flex flex-col gap-4">
-            <AuthButton Icon={FcGoogle} label="Continue with Google" />
-            <AuthButton Icon={FaApple} label="Continue with Apple" />
-            <AuthButton Icon={FaInstagram} label="Continue with Instagram" />
-
+            <AuthButton
+              Icon={FcGoogle}
+              label="Continue with Google"
+              onClick={() => (window.location.href = 'http://localhost:3001/auth/google')}
+            />
+            <AuthButton
+              Icon={FaApple}
+              label="Continue with Apple"
+              href="http://localhost:3001/auth/apple"
+            />
+            <AuthButton
+              Icon={FaInstagram}
+              label="Continue with Instagram"
+              href="http://localhost:3001/auth/instagram"
+            />
             <div className="flex items-center my-2">
               <div className="flex-grow h-px bg-gray-400"></div>
               <span className="mx-2 text-sm text-gray-300">Or</span>
               <div className="flex-grow h-px bg-gray-400"></div>
             </div>
-
             <AuthButton
               Icon={FiMail}
               label="Continue with Email"

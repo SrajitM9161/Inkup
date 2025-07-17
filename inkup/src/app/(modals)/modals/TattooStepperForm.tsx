@@ -1,139 +1,132 @@
-'use client';
+'use client'
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { signupSchema, SignupFormInput } from '../../Constants/Validation.schema';
-import { useState } from 'react';
-import Stepper, { Step } from '../../components/Stepper';
-import { registerUser } from '../../API/Api';
+import { useState } from 'react'
+import { useForm, FormProvider } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { registerUser } from '../../API/Api'
+import * as z from 'zod'
+import Stepper from '../../components/Stepper'
+import { toast } from 'react-hot-toast'
 
-export default function TattooStepperForm() {
-  const [loading, setLoading] = useState(false);
+const formSchema = z.object({
+  businessName: z.string().min(2, "Business name required"),
+  fullName: z.string().min(2, "Full name required"),
+  email: z.string().email("Enter valid email"),
+  password: z.string().min(8, "Password must be 8+ chars"),
+  phoneNumber: z.string().min(10, "Phone must be 10+ digits"),
+  address: z.string().min(2, "Address required"),
+})
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignupFormInput>({
-    resolver: zodResolver(signupSchema),
+type FormData = z.infer<typeof formSchema>
+
+interface Props {
+  onSubmit: (data: { token: string }) => void
+}
+
+export default function SignupStepperForm({ onSubmit }: Props) {
+  const [step, setStep] = useState(0)
+
+  const methods = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    mode: 'onBlur',
     defaultValues: {
-      name: '',
+      businessName: '',
+      fullName: '',
       email: '',
       password: '',
-      businessName: '',
       phoneNumber: '',
-      image: '',
+      address: '',
     },
-  });
+  })
 
-  const onSubmit = async (data: SignupFormInput) => {
-    setLoading(true);
+  const { register, handleSubmit, formState: { errors }, watch } = methods
+
+  const handleFinalSubmit = async (data: FormData) => {
     try {
-      const result = await registerUser(data);
-      alert('✅ Account created!');
-      console.log('New user:', result);
-    } catch (err: any) {
-      alert(err?.response?.data?.message || '❌ Signup failed');
-    } finally {
-      setLoading(false);
+      const payload = {
+        businessName: data.businessName,
+        name: data.fullName,
+        email: data.email,
+        password: data.password,
+        phoneNumber: data.phoneNumber,
+        address: data.address,
+      }
+      const res = await registerUser(payload)
+
+      if (res.token) {
+        toast.success('🎉 Registered successfully!')
+        localStorage.setItem('token', res.token)
+        onSubmit({ token: res.token })
+        setStep(steps.length - 1)
+      } else {
+        toast.error(res.message || 'Signup failed')
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('Registration failed')
     }
-  };
+  }
+
+  const steps = [
+    {
+      label: 'Business Info',
+      content: (
+        <>
+          <label className="block text-sm">Business Name*</label>
+          <input {...register('businessName')} className="input" placeholder="Business name" />
+          {errors.businessName && <p className="text-red-400 text-xs">{errors.businessName.message}</p>}
+
+          <label className="block text-sm mt-4">Full Name*</label>
+          <input {...register('fullName')} className="input" placeholder="Full name" />
+          {errors.fullName && <p className="text-red-400 text-xs">{errors.fullName.message}</p>}
+        </>
+      ),
+    },
+    {
+      label: 'Account Info',
+      content: (
+        <>
+          <label className="block text-sm">Email*</label>
+          <input {...register('email')} className="input" placeholder="Email" />
+          {errors.email && <p className="text-red-400 text-xs">{errors.email.message}</p>}
+
+          <label className="block text-sm mt-4">Password*</label>
+          <input {...register('password')} className="input" type="password" placeholder="Password" />
+          {errors.password && <p className="text-red-400 text-xs">{errors.password.message}</p>}
+        </>
+      ),
+    },
+    {
+      label: 'Contact Info',
+      content: (
+        <>
+          <label className="block text-sm">Phone Number*</label>
+          <input {...register('phoneNumber')} className="input" placeholder="Phone Number" />
+          {errors.phoneNumber && <p className="text-red-400 text-xs">{errors.phoneNumber.message}</p>}
+
+          <label className="block text-sm mt-4">Address*</label>
+          <input {...register('address')} className="input" placeholder="Address" />
+          {errors.address && <p className="text-red-400 text-xs">{errors.address.message}</p>}
+        </>
+      ),
+    },
+    {
+      label: 'Success',
+      content: (
+        <div className="text-center">
+          <div className="text-green-400 text-4xl mb-2">🎉</div>
+          <h2 className="text-xl font-semibold">Welcome, {watch('fullName')}</h2>
+          <p className="text-cyan-400 text-sm">You’re now registered with Inkup</p>
+        </div>
+      ),
+    },
+  ]
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <Stepper
-        initialStep={1}
-        onFinalStepCompleted={handleSubmit(onSubmit)}
-        backButtonText="Back"
-        nextButtonText="Next"
-      >
-        <Step>
-          <div className="space-y-4">
-            <h2 className="text-white text-xl font-semibold">Welcome to Inkup</h2>
-            <p className="text-gray-300">Let’s begin creating your tattoo studio profile</p>
-          </div>
-        </Step>
-
-        <Step>
-          <div className="space-y-4">
-            <input
-              {...register('name')}
-              placeholder="Your full name"
-              disabled={loading}
-              className="w-full px-4 py-2 rounded bg-[#2E2E2E] text-white border border-gray-600"
-            />
-            {errors.name && <p className="text-sm text-red-400">{errors.name.message}</p>}
-
-            <input
-              {...register('businessName')}
-              placeholder="Studio name"
-              disabled={loading}
-              className="w-full px-4 py-2 rounded bg-[#2E2E2E] text-white border border-gray-600"
-            />
-            {errors.businessName && <p className="text-sm text-red-400">{errors.businessName.message}</p>}
-          </div>
-        </Step>
-
-        <Step>
-          <div className="space-y-4">
-            <input
-              {...register('email')}
-              placeholder="Email address"
-              type="email"
-              disabled={loading}
-              className="w-full px-4 py-2 rounded bg-[#2E2E2E] text-white border border-gray-600"
-            />
-            {errors.email && <p className="text-sm text-red-400">{errors.email.message}</p>}
-
-            <input
-              {...register('phoneNumber')}
-              placeholder="Phone number"
-              disabled={loading}
-              className="w-full px-4 py-2 rounded bg-[#2E2E2E] text-white border border-gray-600"
-            />
-            {errors.phoneNumber && <p className="text-sm text-red-400">{errors.phoneNumber.message}</p>}
-          </div>
-        </Step>
-
-        <Step>
-          <div className="space-y-4">
-            <input
-              {...register('password')}
-              placeholder="Password"
-              type="password"
-              disabled={loading}
-              className="w-full px-4 py-2 rounded bg-[#2E2E2E] text-white border border-gray-600"
-            />
-            {errors.password && <p className="text-sm text-red-400">{errors.password.message}</p>}
-          </div>
-        </Step>
-
-        <Step>
-          <div className="space-y-4">
-            <input
-              {...register('image')}
-              placeholder="Image URL (optional)"
-              disabled={loading}
-              className="w-full px-4 py-2 rounded bg-[#2E2E2E] text-white border border-gray-600"
-            />
-            {errors.image && <p className="text-sm text-red-400">{errors.image.message}</p>}
-          </div>
-        </Step>
-
-        <Step>
-          <div className="space-y-4 text-center">
-            <h2 className="text-xl text-white font-semibold">Ready to Inkup?</h2>
-            <p className="text-gray-300">Submit to create your profile and start building your brand!</p>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
-            >
-              {loading ? 'Creating...' : 'Create Account'}
-            </button>
-          </div>
-        </Step>
-      </Stepper>
-    </form>
-  );
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(handleFinalSubmit)}>
+        <Stepper steps={steps} step={step} setStep={setStep} onComplete={handleSubmit(handleFinalSubmit)} />
+      </form>
+    </FormProvider>
+  )
 }

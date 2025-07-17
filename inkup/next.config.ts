@@ -1,14 +1,4 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: "/auth/:path*",                  // Match all /auth routes
-        destination: "http://localhost:3000*", // Proxy to Express backend
-      },
-    ];
-  },
-};
+/** @type {import('next').NextConfig} */
+const nextConfig = {};
 
 export default nextConfig;

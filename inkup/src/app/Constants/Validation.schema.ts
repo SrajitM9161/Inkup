@@ -10,7 +10,7 @@ export const signupSchema = z.object({
     .max(15, 'Too long')
     .optional(),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  image: z.string().url('Image must be a valid URL').optional(), // ✅ add this
+address: z.string().min(5, "Address is required"),
 });
 
 export type SignupFormInput = z.infer<typeof signupSchema>;
