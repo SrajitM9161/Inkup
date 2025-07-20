@@ -1,42 +1,52 @@
 import uploadImageToCloudinary from '../config/Cloudinary.config.js';
-import prisma from '../../prisma/prismaClient.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiResponseHandler from '../utils/apiResponseHandler.js';
 import ApiErrorHandler from '../utils/apiErrorHandler.js';
+import prisma from '../../prisma/prismaClient.js';
 
+export const uploadUserImage = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const file = req.file;
 
-const createGeneration = asyncHandler(async (req, res) => {
-   const userId = req.user.id;
-  console.log("Incoming files:", req.files); // 👈 Check this!
-  console.log("userId:", userId);
+  if (!file) throw new ApiErrorHandler(400, 'User image is required');
 
-  const userImage = req.files?.['userImage']?.[0];
-  const itemImage = req.files?.['itemImage']?.[0];
-
-  if (!userId || !userImage || !itemImage) {
-    throw new ApiErrorHandler(400, 'Missing required fields: userId, userImage, or itemImage');
-  }
-
-  const [userImageUrl, itemImageUrl] = await Promise.all([
-    uploadImageToCloudinary(userImage.path),
-    uploadImageToCloudinary(itemImage.path)
-  ]);
-
-  if (!userImageUrl || !itemImageUrl) {
-    throw new ApiErrorHandler(500, 'Failed to upload images to Cloudinary');
-  }
+  const url = await uploadImageToCloudinary(file.path);
 
   const generation = await prisma.generation.create({
     data: {
       userId,
-      userImageUrl,
-      itemImageUrl,
+      userImageUrl: url,
       status: 'PENDING',
-      outputImageUrl: null,
     },
   });
 
-  return new ApiResponseHandler(201, 'Generation created successfully', generation).send(res);
+  return new ApiResponseHandler(200, 'User image uploaded', generation).send(res);
 });
 
-export { createGeneration };
+export const uploadItemImage = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const file = req.file;
+
+  if (!file) throw new ApiErrorHandler(400, 'Item image is required');
+
+  const url = await uploadImageToCloudinary(file.path);
+
+  const generation = await prisma.generation.findFirst({
+    where: {
+      userId,
+      status: 'PENDING',
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  if (!generation) throw new ApiErrorHandler(404, 'User image must be uploaded first');
+
+  const updated = await prisma.generation.update({
+    where: { id: generation.id },
+    data: { itemImageUrl: url },
+  });
+
+  return new ApiResponseHandler(200, 'Item image uploaded', updated).send(res);
+});

@@ -76,7 +76,7 @@ model Generation {
   userId         String           @db.Uuid
 
   userImageUrl   String           @db.VarChar(500)
-  itemImageUrl   String           @db.VarChar(500)
+  itemImageUrl   String ?          @db.VarChar(500)
   outputImageUrl String?          @db.VarChar(500) // nullable until generation is done
 
   status         GenerationStatus @default(PENDING)

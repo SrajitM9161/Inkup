@@ -37,21 +37,42 @@ export const getUserFromToken = async (): Promise<any> => {
 };
 
 
-export const uploadImages = async (
+
+export const uploadUserImage = async (
   userFile: File,
-  itemFile: File,
   token: string | null
 ) => {
   const formData = new FormData();
   formData.append('userImage', userFile);
-  formData.append('itemImage', itemFile);
 
   const response = await axios.post(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/upload/generate`,
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/upload/user-image`,
     formData,
     {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+
+  return response.data;
+};
+
+
+export const uploadItemImage = async (
+  itemFile: File,
+  token: string | null
+) => {
+  const formData = new FormData();
+  formData.append('itemImage', itemFile);
+
+  const response = await axios.post(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/upload/item-image`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'multipart/form-data',
       },
     }

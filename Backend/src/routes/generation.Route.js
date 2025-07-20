@@ -1,15 +1,11 @@
 import express from 'express';
 import upload from '../middlewares/mutlter.middleware.js';
-import  { createGeneration } from '../controllers/generation.Controller.js';
-import   {protect} from '../middlewares/authMiddleware.js';
+import { uploadUserImage, uploadItemImage } from '../controllers/generation.Controller.js';
+import { protect } from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
 
-
-const multiUpload = upload.fields([
-  { name: 'userImage', maxCount:1 },
-  { name: 'itemImage', maxCount: 5 }
-]);
-
-router.post('/generate', protect, multiUpload, createGeneration);
+router.post('/user-image', protect, upload.single('userImage'), uploadUserImage);
+router.post('/item-image', protect, upload.single('itemImage'), uploadItemImage);
 
 export default router;

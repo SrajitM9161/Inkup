@@ -1,18 +1,20 @@
 import { create } from 'zustand';
-
-export type Tool = 'pen' | 'eraser';
-export type ModelType = 'Basic' | 'Realistic' | 'Anime';
-
-interface Bookmark {
-  image: string;
-  tag?: string;
-  timestamp?: string;
-  model?: ModelType;
-}
+import type { Tool, ModelType } from '../components/types/tool';
+import type { Bookmark } from '../components/types/bookmark';
 
 interface ToolState {
+  // === USER Canvas/Image ===
   selectedImage: string | null;
-  customItemImage: string | null; // ✅ NEW
+  customItemImage: string | null; // still used, not removed
+  uploadedFile: File | null;
+  isUploadModalOpen: boolean;
+
+  // === ITEM Canvas/Image ===
+  itemImage: string | null;
+  itemTool: Tool;
+  itemStrokeWidth: number;
+
+  // === Common ===
   mask: string | null;
   resultImage: string | null;
   isGenerating?: boolean;
@@ -25,9 +27,16 @@ interface ToolState {
   penColor: string;
   generatedItems: string[];
 
-  // Setters
+  // === Methods ===
   setSelectedImage: (img: string | null) => void;
-  setCustomItemImage: (img: string | null) => void; // ✅ NEW
+  setCustomItemImage: (img: string | null) => void;
+  setUploadedFile: (file: File | null) => void;
+  setUploadModalOpen: (val: boolean) => void;
+
+  setItemImage: (img: string | null) => void;
+  setItemTool: (tool: Tool) => void;
+  setItemStrokeWidth: (width: number) => void;
+
   setMask: (mask: string) => void;
   setResultImage: (res: string) => void;
   setIsGenerating: (val: boolean) => void;
@@ -42,11 +51,24 @@ interface ToolState {
   addGeneratedItem: (img: string) => void;
   clearGeneratedItems: () => void;
   reset: () => void;
+
+  undo: () => void;
+  redo: () => void;
 }
 
 export const useToolStore = create<ToolState>((set) => ({
+  // === USER Canvas ===
   selectedImage: null,
-  customItemImage: null, // ✅
+  customItemImage: null,
+  uploadedFile: null,
+  isUploadModalOpen: false,
+
+  // === ITEM Canvas ===
+  itemImage: null,
+  itemTool: 'pen',
+  itemStrokeWidth: 5,
+
+  // === Common ===
   mask: null,
   resultImage: null,
   isGenerating: false,
@@ -59,8 +81,21 @@ export const useToolStore = create<ToolState>((set) => ({
   penColor: '#ff0000',
   generatedItems: [],
 
-  setSelectedImage: (img) => set({ selectedImage: img }),
-  setCustomItemImage: (img) => set({ customItemImage: img }), // ✅
+  // === USER ===
+  setSelectedImage: (img) => {
+    console.log('[store] setSelectedImage called with:', img);
+    set({ selectedImage: img });
+  },
+  setCustomItemImage: (img) => set({ customItemImage: img }),
+  setUploadedFile: (file) => set({ uploadedFile: file }),
+  setUploadModalOpen: (val) => set({ isUploadModalOpen: val }),
+
+  // === ITEM ===
+  setItemImage: (img) => set({ itemImage: img }),
+  setItemTool: (tool) => set({ itemTool: tool }),
+  setItemStrokeWidth: (width) => set({ itemStrokeWidth: width }),
+
+  // === Common ===
   setMask: (mask) => set({ mask }),
   setResultImage: (res) => set({ resultImage: res }),
   setIsGenerating: (val) => set({ isGenerating: val }),
@@ -97,10 +132,25 @@ export const useToolStore = create<ToolState>((set) => ({
 
   clearGeneratedItems: () => set({ generatedItems: [] }),
 
+  undo: () => {
+    console.log('[store] Trigger canvas.undo() from component');
+  },
+
+  redo: () => {
+    console.log('[store] Trigger canvas.redo() from component');
+  },
+
   reset: () =>
     set({
       selectedImage: null,
-      customItemImage: null, // ✅
+      customItemImage: null,
+      uploadedFile: null,
+      isUploadModalOpen: false,
+
+      itemImage: null,
+      itemTool: 'pen',
+      itemStrokeWidth: 5,
+
       mask: null,
       resultImage: null,
       isGenerating: false,
