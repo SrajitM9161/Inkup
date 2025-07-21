@@ -20,7 +20,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>
 
 interface Props {
-  onSubmit: (data: { token: string }) => void
+  onSubmit: () => void // ✅ No token returned now, just success callback
 }
 
 export default function SignupStepperForm({ onSubmit }: Props) {
@@ -51,13 +51,17 @@ export default function SignupStepperForm({ onSubmit }: Props) {
         phoneNumber: data.phoneNumber,
         address: data.address,
       }
+
       const res = await registerUser(payload)
 
-      if (res.token) {
+      if (res.success) {
         toast.success('🎉 Registered successfully!')
-        localStorage.setItem('token', res.token)
-        onSubmit({ token: res.token })
         setStep(steps.length - 1)
+
+        // ✅ Call success callback (no token passed)
+        setTimeout(() => {
+          onSubmit()
+        }, 300)
       } else {
         toast.error(res.message || 'Signup failed')
       }
@@ -125,7 +129,12 @@ export default function SignupStepperForm({ onSubmit }: Props) {
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleFinalSubmit)}>
-        <Stepper steps={steps} step={step} setStep={setStep} onComplete={handleSubmit(handleFinalSubmit)} />
+        <Stepper
+          steps={steps}
+          step={step}
+          setStep={setStep}
+          onComplete={handleSubmit(handleFinalSubmit)}
+        />
       </form>
     </FormProvider>
   )

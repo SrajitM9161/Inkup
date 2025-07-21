@@ -1,8 +1,9 @@
 import express from 'express';
-import { protect } from '../middlewares/authMiddleware.js';
+import protect from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
+// Protected dashboard route
 router.get('/dashboard', protect, (req, res) => {
   return res.json({
     message: 'Secure dashboard data',
@@ -14,7 +15,7 @@ router.get('/dashboard', protect, (req, res) => {
   });
 });
 
-// ✅ Add this route to verify token (used by frontend hook)
+// Get current authenticated user
 router.get('/me', protect, (req, res) => {
   return res.status(200).json({
     id: req.user.id,

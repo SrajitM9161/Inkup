@@ -5,7 +5,8 @@ import Modal from '../../ui/Modal';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useToolStore } from '../../../lib/store';
-import { uploadUserImage } from '../../../../API/Api'; 
+import { uploadUserImage } from '../../../../API/Api';
+import CameraCapture from '../../../../components/CameraCapture'; 
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -15,9 +16,9 @@ interface UploadModalProps {
 export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const [userFile, setUserFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false); // ✅ New state
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Zustand actions
   const setSelectedImage = useToolStore((s) => s.setSelectedImage);
   const setCustomItemImage = useToolStore((s) => s.setCustomItemImage);
   const setUploadedFile = useToolStore((s) => s.setUploadedFile);
@@ -36,20 +37,17 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
       reader.onloadend = async () => {
         const base64 = reader.result as string;
 
-        // ✅ 1. Zustand updates
-        setSelectedImage(base64);        // canvas
-        setCustomItemImage(base64);      // preview
-        setUploadedFile(userFile);       // file object
-        setUploadModalOpen(false);       // Zustand modal close
+        // Local preview + Zustand
+        setSelectedImage(base64);
+        setCustomItemImage(base64);
+        setUploadedFile(userFile);
+        setUploadModalOpen(false);
         toast.success('Image uploaded locally!');
-        onClose();                       // Local modal close
+        onClose();
 
-        // ✅ 2. Upload to backend
+        // Upload to backend
         try {
-          const token = localStorage.getItem('token');
-          if (!token) throw new Error('JWT token missing!');
-
-          const result = await uploadUserImage(userFile, token);
+          const result = await uploadUserImage(userFile);
           console.log('[DEBUG] Uploaded to server:', result);
           toast.success('Image also saved to server!');
         } catch (apiErr) {
@@ -67,10 +65,19 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
     }
   };
 
+  // ✅ Called by CameraCapture when photo is taken
+  const handleCameraCapture = (file: File, base64: string) => {
+    setUserFile(file);
+    setSelectedImage(base64);
+    setCustomItemImage(base64);
+    setUploadedFile(file);
+    setShowCamera(false);
+    toast.success('Photo captured and ready!');
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="w-full space-y-4">
-        {/* Hidden File Input */}
         <input
           ref={inputRef}
           type="file"
@@ -84,8 +91,6 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
             }
           }}
         />
-
-        {/* Drop Zone */}
         <div
           onClick={() => inputRef.current?.click()}
           className="h-60 w-full flex items-center justify-center border border-dashed border-white cursor-pointer rounded-lg"
@@ -103,7 +108,6 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
           )}
         </div>
 
-        {/* Upload Button */}
         <button
           onClick={handleUpload}
           disabled={!userFile || isUploading}
@@ -111,7 +115,21 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
         >
           {isUploading ? 'Uploading...' : 'Upload'}
         </button>
+
+        <button
+          onClick={() => setShowCamera(true)}
+          className="w-full bg-blue-600 text-white rounded-lg py-2 font-semibold hover:opacity-80 transition"
+        >
+          Use Camera
+        </button>
       </div>
+
+      {showCamera && (
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onCancel={() => setShowCamera(false)}
+        />
+      )}
     </Modal>
   );
 }

@@ -1,7 +1,7 @@
 import express from 'express';
 import upload from '../middlewares/mutlter.middleware.js';
 import { uploadUserImage, uploadItemImage } from '../controllers/generation.Controller.js';
-import { protect } from '../middlewares/authMiddleware.js';
+import  protect  from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 

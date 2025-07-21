@@ -32,17 +32,14 @@ export default function ItemUploadModal({ isOpen, onClose }: ItemUploadModalProp
       reader.onloadend = async () => {
         const base64 = reader.result as string;
 
-        // ✅ 1. Local Zustand update
+        // Local Zustand update
         setItemImage(base64);
         toast.success('Item image uploaded!');
         onClose();
 
-        // ✅ 2. Upload to backend API
+        // Upload to backend API
         try {
-          const token = localStorage.getItem('token');
-          if (!token) throw new Error('JWT token missing!');
-
-          const result = await uploadItemImage(itemFile, token);
+          const result = await uploadItemImage(itemFile);
           console.log('[DEBUG] Uploaded to server:', result);
           toast.success('Item image also saved to server!');
         } catch (apiErr) {
@@ -63,7 +60,6 @@ export default function ItemUploadModal({ isOpen, onClose }: ItemUploadModalProp
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="w-full space-y-4">
-        {/* Hidden File Input */}
         <input
           ref={inputRef}
           type="file"
@@ -77,8 +73,6 @@ export default function ItemUploadModal({ isOpen, onClose }: ItemUploadModalProp
             }
           }}
         />
-
-        {/* Drop Zone */}
         <div
           onClick={() => inputRef.current?.click()}
           className="h-60 w-full flex items-center justify-center border border-dashed border-white cursor-pointer rounded-lg"
@@ -95,8 +89,6 @@ export default function ItemUploadModal({ isOpen, onClose }: ItemUploadModalProp
             <p className="text-white">Click to upload an item image</p>
           )}
         </div>
-
-        {/* Upload Button */}
         <button
           onClick={handleUpload}
           disabled={!itemFile || isUploading}

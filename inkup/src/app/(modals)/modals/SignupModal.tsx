@@ -16,7 +16,7 @@ export default function SignupModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { token: string }) => void;
+  onSubmit: () => void; // ❌ removed token parameter
   onSuccess?: () => void;
 }) {
   const [showEmailForm, setShowEmailForm] = useState(false);
@@ -49,12 +49,11 @@ export default function SignupModal({
 
         {showEmailForm ? (
           <SignupStepperForm
-            onSubmit={({ token }) => {
-              localStorage.setItem('token', token);
-              onSubmit({ token });
+            onSubmit={() => {
+              onSubmit();
               setTimeout(() => {
                 onSuccess?.();
-              }, 200); // ensure token is saved before refresh
+              }, 200);
             }}
           />
         ) : (

@@ -1,8 +1,7 @@
-
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getMe } from '../API/Api'; 
+import { getMe } from '../API/Api';
 
 interface AuthContextType {
   authenticated: boolean;
@@ -21,23 +20,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const refreshAuth = async () => {
-    const token = localStorage.getItem('token');
-    console.log('[Auth] Refreshing... Token:', token);
-
-    if (!token) {
-      setAuthenticated(false);
-      setLoading(false);
-      return;
-    }
-
     try {
       const data = await getMe();
-      console.log('[Auth] Me endpoint success:', data);
+      console.log('[Auth] Authenticated user:', data);
       setAuthenticated(true);
-    } catch (err: any) {
-      console.error('[Auth] Me endpoint error:', err?.response?.status, err?.response?.data);
+    } catch (err) {
+      console.error('[Auth] Not authenticated');
       setAuthenticated(false);
-      localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }

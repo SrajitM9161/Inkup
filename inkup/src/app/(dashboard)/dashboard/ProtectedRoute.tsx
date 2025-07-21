@@ -25,9 +25,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           await refreshAuth();
           setShowSignupModal(false);
         }}
-        onSubmit={({ token }) => {
-          localStorage.setItem('token', token);
-        }}
+        // ❌ No token storage
+        onSubmit={() => {}}
       />
     );
   }
