@@ -1,30 +1,25 @@
 'use client';
 
-import Image from 'next/image';
+import ImageCard from './ImageCard';
 
-export default function ImageCard({
-  img,
-  onClick,
+interface CatalogItem {
+  image: string;
+  style: string;
+  source: string;
+}
+
+export default function ImageGrid({
+  images,
+  onSelect,
 }: {
-  img: string;
-  onClick: () => void;
+  images: CatalogItem[];
+  onSelect: (img: string) => void;
 }) {
   return (
-    <div
-      className="cursor-pointer rounded-md overflow-hidden border border-white/10 hover:scale-[1.02] transition"
-      onClick={onClick}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData('image', img); // 👈 Send image data on drag
-      }}
-    >
-      <Image
-        src={img}
-        alt="Catalog"
-        width={300}
-        height={300}
-        className="w-full h-[140px] object-cover"
-      />
+    <div className="grid grid-cols-2 gap-3 p-2">
+      {images.map((item, index) => (
+        <ImageCard key={index} img={item.image} onClick={() => onSelect(item.image)} />
+      ))}
     </div>
   );
 }

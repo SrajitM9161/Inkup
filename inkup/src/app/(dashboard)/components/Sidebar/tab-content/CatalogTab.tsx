@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 interface CatalogTabProps {
   onSelect?: () => void;
 }
+
 export default function CatalogTab({ onSelect }: CatalogTabProps) {
   const { images, isLoading, hasMore, loadMore } = useCatalogImages();
   const { setSelectedImage, setResultImage } = useToolStore();
@@ -16,6 +17,7 @@ export default function CatalogTab({ onSelect }: CatalogTabProps) {
     setSelectedImage(img);
     setResultImage(img);
     toast.success('Image selected!');
+    onSelect?.();
   };
 
   return (

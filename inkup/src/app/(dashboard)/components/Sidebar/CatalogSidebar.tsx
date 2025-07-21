@@ -1,19 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { X } from 'lucide-react';
-import TabSwitcher from './TabSwitcher';
+import { useState, Fragment } from 'react';
+import { X, ChevronDown } from 'lucide-react';
+import { Listbox, Transition } from '@headlessui/react';
 import CatalogTab from './tab-content/CatalogTab';
 import GeneratedTab from './tab-content/GeneratedTab';
 import HistoryTab from './tab-content/HistoryTab';
 
-const tabs = [
-  { key: 'catalog', label: 'Our Catalog' },
-  { key: 'generated', label: 'Generated Designs' },
+const defaultTabs = [
+  { key: 'catalog', label: 'Workspace' },
+  { key: 'generated', label: 'Your Workspace' },
   { key: 'history', label: 'History' },
 ] as const;
 
-type TabKey = (typeof tabs)[number]['key'];
+type TabKey = (typeof defaultTabs)[number]['key'];
+type Tab = (typeof defaultTabs)[number];
 
 export default function CatalogSidebar({
   onClose,
@@ -22,12 +23,13 @@ export default function CatalogSidebar({
   onClose?: () => void;
   isMobileSidebarOpen?: boolean;
 }) {
-  const [activeTab, setActiveTab] = useState<TabKey>('catalog');
+  const [tabs] = useState(defaultTabs);
+  const [activeTab, setActiveTab] = useState<Tab>(defaultTabs[0]);
 
   const renderTabContent = () => {
-    if (activeTab === 'catalog') return <CatalogTab onSelect={onClose} />;
-    if (activeTab === 'generated') return <GeneratedTab onSelect={onClose} />;
-    if (activeTab === 'history') return <HistoryTab onSelect={onClose} />;
+    if (activeTab.key === 'catalog') return <CatalogTab onSelect={onClose} />;
+    if (activeTab.key === 'generated') return <GeneratedTab onSelect={onClose} />;
+    if (activeTab.key === 'history') return <HistoryTab onSelect={onClose} />;
   };
 
   return (
@@ -37,19 +39,59 @@ export default function CatalogSidebar({
         lg:translate-x-0 lg:static lg:block`}
     >
       <div className="flex justify-between items-center px-5 py-4 border-b border-[#222]">
-        <h2 className="text-white text-xl font-semibold">Explore</h2>
+        <h2 className="text-white text-xl font-semibold">Work Space</h2>
         <button onClick={onClose} className="text-gray-400 hover:text-white transition lg:hidden">
           <X size={20} />
         </button>
       </div>
 
-      <TabSwitcher
-        tabs={tabs}
-        activeTab={activeTab}
-        setActiveTab={(key) => setActiveTab(key as TabKey)}
-      />
+      <div className="px-4 py-3">
+        <label className="text-white text-sm mb-2 block">Select Tab</label>
+        <div className="relative">
+          <Listbox value={activeTab} onChange={setActiveTab}>
+            <div className="relative w-full">
+              <Listbox.Button className="relative w-full cursor-pointer rounded-lg bg-[#1E1E1E] py-2 pl-4 pr-10 text-left text-white border border-[#333] focus:outline-none hover:border-[#555] transition">
+                <span className="block truncate">{activeTab.label}</span>
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                </span>
+              </Listbox.Button>
+              <Transition
+                as={Fragment}
+                leave="transition ease-in duration-100"
+                leaveFrom="opacity-100"
+                leaveTo="opacity-0"
+              >
+                <Listbox.Options className="absolute mt-1 w-full rounded-lg bg-[#1E1E1E] border border-[#333] shadow-lg z-50 max-h-60 overflow-auto focus:outline-none">
+                  {tabs.map((tab) => (
+                    <Listbox.Option
+                      key={tab.key}
+                      value={tab}
+                      className={({ active }) =>
+                        `cursor-pointer select-none py-2 pl-4 pr-10 ${
+                          active ? 'bg-[#2a2a2a]' : ''
+                        }`
+                      }
+                    >
+                      {({ selected }) => (
+                        <span
+                          className={`block truncate ${
+                            selected ? 'text-[#00efff] font-semibold' : 'text-white'
+                          }`}
+                        >
+                          {tab.label}
+                        </span>
+                      )}
+                    </Listbox.Option>
+                  ))}
+                </Listbox.Options>
+              </Transition>
+            </div>
+          </Listbox>
+        </div>
+      </div>
 
-      <div className="px-4 py-3 overflow-y-auto h-[calc(100%-120px)]">
+      <div className="px-4 py-3 overflow-y-auto h-[calc(100%-160px)]">
         {renderTabContent()}
       </div>
     </aside>

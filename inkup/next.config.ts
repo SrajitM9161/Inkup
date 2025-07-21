@@ -1,12 +1,23 @@
-// /** @type {import('next').NextConfig} */
-// const nextConfig = {};
-
-// export default nextConfig;
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['images.dog.ceo'], // ✅ Add this line
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'img.blackink.ai',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'sb.blackink.ai',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'blackink.ai',
+        pathname: '/**',
+      },
+    ],
   },
 };
 

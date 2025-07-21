@@ -1,31 +1,37 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import CatalogJson from '../../../../JSON/Catalog.json'; // adjust the path based on your structure
+
+interface CatalogItem {
+  image: string;
+  style: string;
+  source: string;
+}
 
 export const useCatalogImages = () => {
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<CatalogItem[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const itemsPerPage = 10;
 
-  const loadMore = async () => {
+  const loadMore = () => {
     if (isLoading || !hasMore) return;
     setIsLoading(true);
 
-    try {
-      const res = await fetch("heheheheh");
-      const data: string[] = await res.json();
+    setTimeout(() => {
+      const nextItems = CatalogJson.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
-      if (data.length === 0) setHasMore(false);
-      else {
-        setImages((prev) => [...prev, ...data]);
+      if (nextItems.length === 0) {
+        setHasMore(false);
+      } else {
+        setImages((prev) => [...prev, ...nextItems]);
         setPage((p) => p + 1);
       }
-    } catch (err) {
-      console.error('Failed to load catalog images', err);
-    } finally {
+
       setIsLoading(false);
-    }
+    }, 300); // Optional delay for smooth UX
   };
 
   useEffect(() => {

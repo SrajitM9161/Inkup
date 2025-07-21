@@ -6,6 +6,7 @@ import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useToolStore } from '../../../lib/store';
 import { uploadItemImage } from '../../../../API/Api';
+import { ImagePlus } from 'lucide-react';
 
 interface ItemUploadModalProps {
   isOpen: boolean;
@@ -27,17 +28,13 @@ export default function ItemUploadModal({ isOpen, onClose }: ItemUploadModalProp
 
     try {
       setIsUploading(true);
-
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64 = reader.result as string;
-
-        // Local Zustand update
         setItemImage(base64);
         toast.success('Item image uploaded!');
         onClose();
 
-        // Upload to backend API
         try {
           const result = await uploadItemImage(itemFile);
           console.log('[DEBUG] Uploaded to server:', result);
@@ -59,42 +56,51 @@ export default function ItemUploadModal({ isOpen, onClose }: ItemUploadModalProp
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="w-full space-y-4">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              setItemFile(file);
-              console.log('[DEBUG] Item File selected:', file.name);
-            }
-          }}
-        />
-        <div
-          onClick={() => inputRef.current?.click()}
-          className="h-60 w-full flex items-center justify-center border border-dashed border-white cursor-pointer rounded-lg"
-        >
-          {itemFile ? (
-            <Image
-              src={URL.createObjectURL(itemFile)}
-              alt="Selected item image"
-              width={300}
-              height={300}
-              className="object-contain max-h-full max-w-full rounded"
-            />
-          ) : (
-            <p className="text-white">Click to upload an item image</p>
-          )}
+      <div className="w-full space-y-4 text-center">
+        <h2 className="text-xl font-semibold">Upload Item</h2>
+        <p className="text-sm text-gray-400">Upload an item image to place or design with.</p>
+
+        {/* Preview */}
+        {itemFile && (
+          <Image
+            src={URL.createObjectURL(itemFile)}
+            alt="Selected item"
+            width={300}
+            height={300}
+            className="mx-auto object-contain max-h-48 rounded"
+          />
+        )}
+
+        {/* Upload Button */}
+        <div className="flex justify-center">
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="px-3 py-2 text-sm bg-cyan-400 text-black rounded hover:bg-cyan-300 flex items-center gap-1"
+          >
+            <ImagePlus size={16} />
+            Upload Image
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setItemFile(file);
+              }
+            }}
+          />
         </div>
+
+        {/* Confirm Upload */}
         <button
           onClick={handleUpload}
           disabled={!itemFile || isUploading}
-          className="w-full bg-white text-black rounded-lg py-2 font-semibold hover:opacity-80 transition"
+          className="w-full mt-2 px-4 py-2 text-sm border border-cyan-400 text-cyan-400 rounded hover:bg-cyan-400 hover:text-black transition disabled:opacity-50"
         >
-          {isUploading ? 'Uploading...' : 'Upload Item'}
+          {isUploading ? 'Uploading...' : 'Confirm & Upload'}
         </button>
       </div>
     </Modal>

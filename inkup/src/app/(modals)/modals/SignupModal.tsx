@@ -61,17 +61,17 @@ export default function SignupModal({
             <AuthButton
               Icon={FcGoogle}
               label="Continue with Google"
-              onClick={() => (window.location.href = 'http://localhost:3001/auth/google')}
+              onClick={() => (window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google`)}
             />
             <AuthButton
               Icon={FaApple}
               label="Continue with Apple"
-              href="http://localhost:3001/auth/apple"
+              href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/apple`}
             />
             <AuthButton
               Icon={FaInstagram}
               label="Continue with Instagram"
-              href="http://localhost:3001/auth/instagram"
+              href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/instagram`}
             />
             <div className="flex items-center my-2">
               <div className="flex-grow h-px bg-gray-400"></div>

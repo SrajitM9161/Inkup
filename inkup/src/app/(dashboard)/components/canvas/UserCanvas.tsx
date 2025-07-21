@@ -32,9 +32,17 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   return (
     <div
       onWheel={handleWheelZoom}
-      className="relative w-[280px] h-[420px] rounded-[20px] overflow-hidden border border-[#333] shadow-[0_0_30px_rgba(255,255,255,0.05)] backdrop-blur-md"
+      className="
+        relative
+        w-[280px] h-[420px]           // mobile default
+        md:w-[360px] md:h-[540px]     // iPad/tablet
+        lg:w-[280px] lg:h-[420px]     // desktop overrides back to mobile size
+        rounded-[20px] overflow-hidden 
+        border border-[#333] 
+        shadow-[0_0_30px_rgba(255,255,255,0.05)] 
+        backdrop-blur-md
+      "
     >
-
       <div className="absolute top-2 right-2 z-30 flex flex-col gap-2">
         <button
           onClick={zoomIn}

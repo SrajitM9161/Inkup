@@ -19,8 +19,6 @@ export default function CameraCapture({ onCapture, onCancel }: CameraCaptureProp
         stream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-
-          // Wait for video metadata before playing
           videoRef.current.onloadedmetadata = () => {
             videoRef.current?.play().catch((err) => {
               console.warn('[CameraCapture] Video play failed:', err);
@@ -65,21 +63,25 @@ export default function CameraCapture({ onCapture, onCancel }: CameraCaptureProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center">
-      <div className="bg-white p-4 rounded-lg w-full max-w-md space-y-4">
-        <video ref={videoRef} className="w-full rounded-lg" autoPlay muted playsInline />
-        <div className="flex justify-between">
-          <button
-            onClick={capture}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            Capture
-          </button>
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
+      <div className="bg-[#1e1e1e] p-6 rounded-2xl shadow-xl w-full max-w-lg">
+        <h2 className="text-xl font-semibold text-cyan-500 mb-4 text-center"> Click Your Self to see the Magic</h2>
+        <div className="rounded-xl overflow-hidden border-4 border-cyan-400">
+          <video ref={videoRef} className="w-full h-auto" autoPlay muted playsInline />
+        </div>
+
+        <div className="flex justify-between mt-6">
           <button
             onClick={onCancel}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            className="w-[48%] px-4 py-2 text-sm font-semibold border border-cyan-400 text-cyan-400 rounded hover:bg-cyan-400 hover:text-white transition-all duration-200"
           >
-            Cancel
+             Cancel
+          </button>
+          <button
+            onClick={capture}
+            className="w-[48%] px-4 py-2 text-sm font-semibold border border-cyan-400 text-cyan-400 rounded hover:bg-cyan-400 hover:text-white transition-all duration-200"
+          >
+             Capture
           </button>
         </div>
       </div>

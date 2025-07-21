@@ -20,7 +20,14 @@ export default function BottomBar({
   isGenerating,
 }: BottomBarProps) {
   return (
-    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[700px] bg-[#1a1a1a] border border-neutral-800 px-4 py-3 rounded-xl shadow-lg space-y-3">
+    <div className="
+      fixed bottom-5 left-4 right-4 z-50 
+      bg-[#1a1a1a] border border-neutral-800 
+      rounded-xl shadow-lg 
+      space-y-3 
+      md:left-6 md:right-6 md:px-6
+      lg:left-6 lg:right-96 lg:px-6
+    ">
       <BottomToolbarTop canvasRef={canvasRef} />
 
       <BottomToolbarBottom

@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  Download,
-  Pencil,
-  Eraser,
-  Undo2,
-  Redo2,
-} from 'lucide-react';
+import { Download, Pencil, Eraser, Undo2, Redo2 } from 'lucide-react';
 import { useToolStore } from '../../lib/store';
 import { ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -18,15 +12,8 @@ interface BottomToolbarTopProps {
 }
 
 export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
-  const {
-    selectedImage,
-    tool,
-    setTool,
-    strokeWidth,
-    setStrokeWidth,
-  } = useToolStore();
+  const { selectedImage, tool, setTool, strokeWidth, setStrokeWidth } = useToolStore();
 
-  // ✅ Register keyboard shortcuts
   useKeyboardShortcuts(canvasRef);
 
   const handleStrokeWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +27,6 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
     }
 
     try {
-      // Get drawing as image
       const sketch = await canvasRef.current.exportImage('png');
 
       const background = new Image();
@@ -68,7 +54,6 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
       ctx.drawImage(overlay, 0, 0);
 
       const finalImage = canvas.toDataURL('image/png');
-
       const a = document.createElement('a');
       a.href = finalImage;
       a.download = 'drawing.png';
@@ -81,59 +66,29 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
     }
   }, [canvasRef, selectedImage]);
 
-  const undo = () => {
-    if (canvasRef.current) {
-      canvasRef.current.undo();
-    }
-  };
-
-  const redo = () => {
-    if (canvasRef.current) {
-      canvasRef.current.redo();
-    }
-  };
+  const undo = () => canvasRef.current?.undo?.();
+  const redo = () => canvasRef.current?.redo?.();
 
   return (
-    <div
-      className="
-        fixed
-        bottom-15
-        left-40
-        -translate-x-1/2
-        z-50
-        bg-black/40
-        backdrop-blur-md
-        rounded-2xl
-        p-3
-        flex
-        flex-wrap
-        items-center
-        gap-3
-        px-4
-        shadow-lg
-        border
-        border-white/10
-        max-w-[95vw]
-        sm:max-w-md
-      "
-    >
+    <div className="
+      w-fit 
+      flex flex-wrap items-center justify-center 
+      gap-4 px-4 py-2
+      bg-black/40 backdrop-blur-md 
+      rounded-2xl border border-white/10
+    ">
       <Pencil
         size={22}
-        className={`cursor-pointer transition-colors ${
-          tool === 'pen' ? 'text-green-400' : 'text-white'
-        }`}
+        className={`cursor-pointer transition-colors ${tool === 'pen' ? 'text-[#00efff]' : 'text-white'}`}
         onClick={() => setTool('pen')}
       />
       <Eraser
         size={22}
-        className={`cursor-pointer transition-colors ${
-          tool === 'eraser' ? 'text-green-400' : 'text-white'
-        }`}
+        className={`cursor-pointer transition-colors ${tool === 'eraser' ? 'text-green-400' : 'text-white'}`}
         onClick={() => setTool('eraser')}
       />
       <Undo2 size={22} className="text-white cursor-pointer" onClick={undo} />
       <Redo2 size={22} className="text-white cursor-pointer" onClick={redo} />
-
       <input
         type="range"
         min={1}
@@ -142,12 +97,7 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
         onChange={handleStrokeWidthChange}
         className="w-24"
       />
-
-      <Download
-        size={22}
-        className="text-white cursor-pointer"
-        onClick={handleDownload}
-      />
+      <Download size={22} className="text-white cursor-pointer" onClick={handleDownload} />
     </div>
   );
 }
