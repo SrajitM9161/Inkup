@@ -31,7 +31,7 @@ export const useCatalogImages = () => {
       }
 
       setIsLoading(false);
-    }, 300); // Optional delay for smooth UX
+    }, 300); 
   };
 
   useEffect(() => {

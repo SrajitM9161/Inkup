@@ -18,13 +18,13 @@ const uploadImageToCloudinary = async (filePath) => {
     });
 
     console.log('Uploaded to Cloudinary:', response.secure_url);
-    await fs.unlink(filePath); // delete local file after successful upload
+    await fs.unlink(filePath); 
 
     return response.secure_url;
   } catch (error) {
     console.error('Upload error:', error);
     try {
-      await fs.unlink(filePath); // clean up even on failure
+      await fs.unlink(filePath); 
     } catch (_) {}
     return null;
   }

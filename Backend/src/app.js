@@ -4,28 +4,30 @@ import cors from 'cors';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import path from 'path';
 import passport from './config/auth.config.js';
 import authRoutes from './routes/auth.route.js';
+dotenv.config();
 import dashboardRoutes from './routes/dashbord.route.js';
 import ApiErrorHandler from './utils/apiErrorHandler.js';
-import Upload from './routes/generation.Route.js'
-dotenv.config();
+import generateRoutes from './routes/gerate.route.js';
+import tryonRoutes from './routes/tryon.route.js'
+import outputimage from "./routes/outputimage.route.js"
 const app = express();
 
 app.set('trust proxy', true);
 
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: process.env.CORS_ORIGIN,
   credentials: true,
 }));
 
-// Security & middleware
 app.use(helmet());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Session config
 app.use(session({
   secret: process.env.JWT_SECRET,
   resave: false,
@@ -33,18 +35,23 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'lax', // use 'none' with HTTPS only for cross-site cookies
-    maxAge: 1000 * 60 * 60 * 24, // 1 day
+    sameSite: 'lax',
+    maxAge: 86400000, 
   },
 }));
 
 app.use(passport.initialize());
 
+
+app.use('/temp', express.static(path.join(process.cwd(), 'Public/temp')));
+
 app.use('/', authRoutes);
 app.use('/', dashboardRoutes);
-app.use('/api/upload', Upload);
+app.use('/api/upload', generateRoutes);
+app.use('/api/tryon', tryonRoutes);
+app.use('/api',outputimage)
 app.get('/health', (req, res) => {
-  res.status(200).json({ success: true, message: 'Server healthy ✅' });
+  res.status(200).json({ success: true, message: 'Server healthy ' });
 });
 
 app.use((err, req, res, next) => {

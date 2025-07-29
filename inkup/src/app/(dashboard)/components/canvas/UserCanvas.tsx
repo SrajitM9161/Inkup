@@ -7,6 +7,7 @@ import { Plus, Minus, Trash2 } from 'lucide-react';
 import { useCanvasZoom } from './useCanvasZoom';
 import { useCanvasExport } from './useCanvasExport';
 import MaskOverlay from './MaskOverlay';
+import Loader from '../ui/CrazyLoader';
 
 interface UserCanvasProps {
   canvasRef: React.RefObject<ReactSketchCanvasRef | null>;
@@ -14,11 +15,14 @@ interface UserCanvasProps {
 
 export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   const {
-    selectedImage,
+    userImage,
     tool,
     strokeWidth,
     mask,
     maskOpacity,
+    clearPersistedImages,
+    resultImage,
+    isGenerating,
   } = useToolStore();
 
   const { scale, zoomIn, zoomOut, handleWheelZoom } = useCanvasZoom();
@@ -29,58 +33,55 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
     canvasRef.current.eraseMode(tool === 'eraser');
   }, [tool]);
 
+  const handleClearAll = () => {
+    clearCanvas();
+    clearPersistedImages();
+  };
+
+  // The image to show underneath the canvas (either original or generated)
+  const baseImage = resultImage || userImage;
+
   return (
     <div
       onWheel={handleWheelZoom}
       className="
-        relative
-        w-[280px] h-[420px]           // mobile default
-        md:w-[360px] md:h-[540px]     // iPad/tablet
-        lg:w-[280px] lg:h-[420px]     // desktop overrides back to mobile size
+        relative w-[280px] h-[420px]
+        md:w-[360px] md:h-[540px]
+        lg:w-[280px] lg:h-[420px]
         rounded-[20px] overflow-hidden 
         border border-[#333] 
         shadow-[0_0_30px_rgba(255,255,255,0.05)] 
         backdrop-blur-md
       "
     >
+      {/* Controls */}
       <div className="absolute top-2 right-2 z-30 flex flex-col gap-2">
-        <button
-          onClick={zoomIn}
-          className="bg-[#222] text-white p-1 rounded hover:bg-[#333]"
-          title="Zoom In"
-        >
+        <button onClick={zoomIn} className="bg-[#222] text-white p-1 rounded hover:bg-[#333]">
           <Plus size={18} />
         </button>
-        <button
-          onClick={zoomOut}
-          className="bg-[#222] text-white p-1 rounded hover:bg-[#333]"
-          title="Zoom Out"
-        >
+        <button onClick={zoomOut} className="bg-[#222] text-white p-1 rounded hover:bg-[#333]">
           <Minus size={18} />
         </button>
-        <button
-          onClick={clearCanvas}
-          className="bg-[#222] text-white p-1 rounded hover:bg-[#333]"
-          title="Clear Canvas"
-        >
+        <button onClick={handleClearAll} className="bg-[#222] text-white p-1 rounded hover:bg-[#333]">
           <Trash2 size={18} />
         </button>
       </div>
 
-      {selectedImage && (
-        <div className="absolute w-full h-full bg-white/10 blur-2xl z-0" />
-      )}
+      {/* Blur background */}
+      {baseImage && <div className="absolute w-full h-full bg-white/10 blur-2xl z-0" />}
 
-      {selectedImage && (
+      {/* Image (original or result) */}
+      {baseImage && (
         <img
-          src={selectedImage}
-          alt="User Uploaded"
+          src={baseImage}
+          alt="Displayed Image"
           className="absolute z-10 object-contain w-full h-full transition-transform duration-300"
           style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}
         />
       )}
 
-      {selectedImage && (
+      {/* Drawing Canvas (only when not yet generating result) */}
+      {userImage && !resultImage && (
         <ReactSketchCanvas
           ref={canvasRef}
           width="100%"
@@ -88,17 +89,19 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
           strokeWidth={strokeWidth}
           strokeColor={tool === 'pen' ? '#ff3366' : '#ffffff'}
           canvasColor="transparent"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            zIndex: 20,
-            pointerEvents: 'auto',
-          }}
+          style={{ position: 'absolute', top: 0, left: 0, zIndex: 20, pointerEvents: 'auto' }}
         />
       )}
 
+      {/* Mask overlay */}
       {mask && <MaskOverlay mask={mask} opacity={maskOpacity} />}
+
+      {/* Loader */}
+      {isGenerating && (
+        <div className="absolute inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <Loader />
+        </div>
+      )}
     </div>
   );
 }

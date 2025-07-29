@@ -20,8 +20,7 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const [showCamera, setShowCamera] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const setSelectedImage = useToolStore((s) => s.setSelectedImage);
-  const setCustomItemImage = useToolStore((s) => s.setCustomItemImage);
+  const setUserImage = useToolStore((s) => s.setUserImage);
   const setUploadedFile = useToolStore((s) => s.setUploadedFile);
   const setUploadModalOpen = useToolStore((s) => s.setUploadModalOpen);
 
@@ -32,8 +31,7 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64 = reader.result as string;
-      setSelectedImage(base64);
-      setCustomItemImage(base64);
+      setUserImage(base64);
       setUploadedFile(userFile);
       setUploadModalOpen(false);
       toast.success('Image uploaded locally!');
@@ -46,31 +44,31 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
       } catch (err) {
         console.error('[Upload Error]', err);
         toast.error('Saved locally but failed to upload to server');
+      } finally {
+        setIsUploading(false);
       }
     };
 
     reader.readAsDataURL(userFile);
-    setIsUploading(false);
   };
 
   const handleCameraCapture = (file: File, base64: string) => {
     setUserFile(file);
-    setSelectedImage(base64);
-    setCustomItemImage(base64);
+    setUserImage(base64);
     setUploadedFile(file);
     setShowCamera(false);
     toast.success('Photo captured!');
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Image placement">
-      <div className="text-center space-y-4">
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="mx-auto max-w-sm px-0 text-center space-y-6">
         <div className="flex justify-center">
-          <ImagePlus size={40} className="text-cyan-400" />
+          <ImagePlus size={40} className="text-[#d0fe17]" />
         </div>
         <h2 className="text-xl font-semibold">Image placement</h2>
         <p className="text-gray-400 text-sm">
-          Add image and visualize tattoo – just by draw, erase, adjust and apply your touch
+          Add image and visualize tattoo – just draw, erase, adjust and apply your touch.
         </p>
 
         <div className="space-y-2">
@@ -89,14 +87,15 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
           <div className="flex justify-center gap-2">
             <button
               onClick={() => inputRef.current?.click()}
-              className="px-3 py-2 text-sm bg-cyan-400 text-black rounded hover:bg-cyan-300 flex items-center gap-1"
+              className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1"
             >
               <ImagePlus size={16} />
               Upload Image
             </button>
+
             <button
               onClick={() => setShowCamera(true)}
-              className="px-3 py-2 text-sm border border-cyan-400 text-cyan-400 rounded hover:bg-cyan-400 hover:text-black flex items-center gap-1"
+              className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1"
             >
               <Camera size={16} />
               Use Camera
@@ -120,7 +119,7 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
         <button
           onClick={handleUpload}
           disabled={!userFile || isUploading}
-          className="w-full mt-4 px-4 py-2 text-sm border border-cyan-400 text-cyan-400 rounded hover:bg-cyan-400 hover:text-black transition disabled:opacity-50"
+          className="w-full mt-4 px-4 py-2 text-sm border border-[#D0FE17] text-[#D0FE17] rounded transition-all duration-200 hover:bg-[#D0FE17] hover:text-black hover:font-bold hover:border-transparent disabled:opacity-50"
         >
           {isUploading ? 'Uploading...' : 'Confirm & Upload'}
         </button>

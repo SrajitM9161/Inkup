@@ -1,6 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+
+  async rewrites() {
+    return [
+      {
+        source: '/api/upload/:path*',
+        destination: 'http://localhost:3001/api/upload/:path*', 
+      },
+    ];
+  },
   images: {
+    domains: ['res.cloudinary.com'],
     remotePatterns: [
       {
         protocol: 'https',

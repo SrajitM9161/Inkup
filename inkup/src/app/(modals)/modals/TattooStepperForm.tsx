@@ -1,12 +1,12 @@
 'use client'
-
 import { useState } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { registerUser } from '../../API/Api'
 import * as z from 'zod'
-import Stepper from '../../components/Stepper'
 import { toast } from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
+import { registerUser, getMe } from '../../API/Api'
+import Stepper from '../../components/Stepper'
 
 const formSchema = z.object({
   businessName: z.string().min(2, "Business name required"),
@@ -20,10 +20,11 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>
 
 interface Props {
-  onSubmit: () => void // ✅ No token returned now, just success callback
+  onSubmit: () => void
 }
 
 export default function SignupStepperForm({ onSubmit }: Props) {
+  const router = useRouter()
   const [step, setStep] = useState(0)
 
   const methods = useForm<FormData>({
@@ -58,16 +59,31 @@ export default function SignupStepperForm({ onSubmit }: Props) {
         toast.success('🎉 Registered successfully!')
         setStep(steps.length - 1)
 
-        // ✅ Call success callback (no token passed)
-        setTimeout(() => {
-          onSubmit()
-        }, 300)
+        // ✅ Wait for session cookie to be set
+        setTimeout(async () => {
+          try {
+            const user = await getMe()
+            if (user) {
+              onSubmit?.()
+              router.push('/dashboard')
+            }
+          } catch (e) {
+            console.error('Auth check failed:', e)
+            toast.error('Auth check failed. Please log in manually.')
+            router.push('/')
+          }
+        }, 1000)
       } else {
         toast.error(res.message || 'Signup failed')
       }
-    } catch (err) {
-      console.error(err)
-      toast.error('Registration failed')
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        toast.error("Email already registered. Try logging in.")
+        router.push('/login')
+      } else {
+        console.error(err)
+        toast.error('Registration failed. Try again.')
+      }
     }
   }
 

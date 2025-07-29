@@ -1,3 +1,4 @@
+// ===== DashboardPage.tsx (Production-Ready Fix) =====
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -8,14 +9,13 @@ import { Menu } from 'lucide-react';
 import { ReactSketchCanvasRef } from 'react-sketch-canvas';
 
 import { useToolStore } from '../lib/store';
-// import { generateImageWithItem } from '../lib/api';
-
 import CanvasWrapper from '../components/canvas/CanvasWrapper';
 import BottomBar from '../components/dashboard/BottomBar';
 import UploadModal from '../components/dashboard/Modals/UploadModal';
 import ItemUploadModal from '../components/dashboard/Modals/Uploadtatoo';
 import CatalogSidebar from '../components/Sidebar/CatalogSidebar';
 import ProtectedRoute from './ProtectedRoute';
+import { generateTryonImage } from '../../API/Api';
 
 export default function DashboardPage() {
   const [sidebarOpenMobile, setSidebarOpenMobile] = useState(false);
@@ -27,14 +27,15 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const {
-    selectedImage,
+    userImage,
+    itemImage,
     setTool,
-    setResultImage,
     setIsGenerating,
     isGenerating,
+    setResultImage,
+    setUserImage,
   } = useToolStore();
 
-  // Store token if present in query
   useEffect(() => {
     const token = searchParams.get('token');
     if (token) {
@@ -43,17 +44,9 @@ export default function DashboardPage() {
     }
   }, [searchParams, router]);
 
-  // Switch to 'pen' tool when image is uploaded
-  useEffect(() => {
-    if (selectedImage) {
-      setTool('pen');
-    }
-  }, [selectedImage, setTool]);
-
-  // Generate image via backend
   const handleGenerate = async () => {
-    if (!canvasRef.current || !selectedImage) {
-      toast.error('No image selected!');
+    if (!canvasRef.current || !userImage || !itemImage) {
+      toast.error('Upload both human and tattoo images first!');
       return;
     }
 
@@ -62,13 +55,16 @@ export default function DashboardPage() {
       toast.loading('Generating...');
       setIsGenerating(true);
 
-      // const generatedImage = await generateImageWithItem(selectedImage, mask);
-      // setResultImage(generatedImage);
+      // ✅ Safe usage — TS ensures userImage/itemImage are strings
+      const generated = await generateTryonImage(userImage, itemImage, mask);
+
+      setUserImage(generated);
+      setResultImage("");
       canvasRef.current.clearCanvas();
-      toast.success('Generated!');
+      setTool('pen');
     } catch (err) {
       console.error(err);
-      toast.error('Generation failed.');
+      toast.error('Failed to generate');
     } finally {
       toast.dismiss();
       setIsGenerating(false);
@@ -96,13 +92,13 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Main Drawing Area */}
+        {/* Main Content */}
         <div className="flex-1 h-full flex flex-col overflow-hidden relative">
           {/* Modals */}
           <UploadModal isOpen={uploadModalOpen} onClose={() => setUploadModalOpen(false)} />
           <ItemUploadModal isOpen={itemUploadModalOpen} onClose={() => setItemUploadModalOpen(false)} />
 
-          {/* Mobile Top Bar */}
+          {/* Header (Mobile) */}
           <div className="flex lg:hidden justify-between items-center px-4 py-3 border-b border-white/10 bg-[#0D0D0D]">
             <button
               onClick={() => setSidebarOpenMobile(true)}
@@ -114,35 +110,30 @@ export default function DashboardPage() {
             <Image src="/logo-icon.svg" alt="Logo" width={32} height={32} />
           </div>
 
-          {/* Canvas + Tools */}
+          {/* Main Canvas Area */}
           <main className="flex-1 overflow-y-auto px-4 py-6 flex flex-col items-center gap-6">
-            {!selectedImage ? (
+            {!userImage || !itemImage ? (
               <div className="text-center mt-10">
-                <Image
-                  src="/logo-icon.svg"
-                  alt="Logo"
-                  width={64}
-                  height={64}
-                  className="mx-auto mb-3"
-                />
+                <Image src="/logo-icon.svg" alt="Logo" width={64} height={64} className="mx-auto mb-3" />
                 <h1 className="text-3xl font-bold">INKUP GENERATE</h1>
                 <p className="text-sm text-gray-400">
                   Draw, edit, erase — just <span className="text-white font-medium">clip and create</span>
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-col items-center gap-4">
                 <CanvasWrapper canvasRef={canvasRef} />
               </div>
             )}
 
-            {/* Bottom Action Bar */}
+            {/* Bottom Controls */}
             <BottomBar
               onUploadClick={() => setUploadModalOpen(true)}
               onUploadItemClick={() => setItemUploadModalOpen(true)}
               onGenerate={handleGenerate}
               isGenerating={isGenerating ?? false}
               canvasRef={canvasRef}
+              disableGenerate={!userImage || !itemImage}
             />
           </main>
         </div>

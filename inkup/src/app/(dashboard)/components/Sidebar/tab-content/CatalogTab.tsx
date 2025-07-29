@@ -11,18 +11,18 @@ interface CatalogTabProps {
 
 export default function CatalogTab({ onSelect }: CatalogTabProps) {
   const { images, isLoading, hasMore, loadMore } = useCatalogImages();
-  const { setSelectedImage, setResultImage } = useToolStore();
+  const { setItemImage } = useToolStore(); // ✅ update only itemImage
 
   const handleSelect = (img: string) => {
-    setSelectedImage(img);
-    setResultImage(img);
-    toast.success('Image selected!');
+    setItemImage(img);
+    toast.success('Tattoo image selected!');
     onSelect?.();
   };
 
   return (
     <div
-      className="overflow-y-auto max-h-[60vh] pr-1"
+      className="flex-1 overflow-y-auto"
+      style={{ maxHeight: 'calc(100vh - 140px)' }}
       onScroll={(e) => {
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
         if (scrollTop + clientHeight >= scrollHeight - 50 && hasMore && !isLoading) {

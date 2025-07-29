@@ -11,7 +11,8 @@ export default function ImageCard({
 }) {
   return (
     <div
-      className="cursor-pointer rounded-md overflow-hidden border border-white/10 hover:scale-[1.02] transition"
+  className="cursor-pointer overflow-hidden hover:scale-[1.02] transition"
+
       onClick={onClick}
       draggable
       onDragStart={(e) => {

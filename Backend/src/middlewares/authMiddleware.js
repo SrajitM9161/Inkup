@@ -5,16 +5,17 @@ import cookie from 'cookie';
 
 const protect = async (req, res, next) => {
   try {
-    const cookies = req.headers.cookie;
 
-    if (!cookies || !cookies.includes('token')) {
-      return next(new ApiErrorHandler(401, 'Authentication required'));
+    const cookies = req.headers.cookie;
+    if (!cookies) {
+      return next(new ApiErrorHandler(401, 'No cookies provided'));
     }
 
-    const { token } = cookie.parse(cookies || '');
+    const parsedCookies = cookie.parse(cookies || '');
+    const token = parsedCookies.token;
 
     if (!token) {
-      return next(new ApiErrorHandler(401, 'No token provided'));
+      return next(new ApiErrorHandler(401, 'Authentication token missing'));
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -27,7 +28,7 @@ const protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.error('Auth Middleware Error:', error);
+
     return next(new ApiErrorHandler(401, 'Invalid or expired token'));
   }
 };

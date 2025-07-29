@@ -65,21 +65,21 @@ export default function CameraCapture({ onCapture, onCancel }: CameraCaptureProp
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
       <div className="bg-[#1e1e1e] p-6 rounded-2xl shadow-xl w-full max-w-lg">
-        <h2 className="text-xl font-semibold text-cyan-500 mb-4 text-center"> Click Your Self to see the Magic</h2>
-        <div className="rounded-xl overflow-hidden border-4 border-cyan-400">
+       
+        <div className="rounded-xl overflow-hidden ">
           <video ref={videoRef} className="w-full h-auto" autoPlay muted playsInline />
         </div>
 
         <div className="flex justify-between mt-6">
           <button
             onClick={onCancel}
-            className="w-[48%] px-4 py-2 text-sm font-semibold border border-cyan-400 text-cyan-400 rounded hover:bg-cyan-400 hover:text-white transition-all duration-200"
+            className="w-[48%] px-4 py-2 text-sm font-semibold border border-[#d0fe1f] text-[#d0fe1f] rounded hover:bg-[#d0fe1f] hover:text-black transition-all duration-200"
           >
              Cancel
           </button>
           <button
             onClick={capture}
-            className="w-[48%] px-4 py-2 text-sm font-semibold border border-cyan-400 text-cyan-400 rounded hover:bg-cyan-400 hover:text-white transition-all duration-200"
+            className="w-[48%] px-4 py-2 text-sm font-semibold border border-[#d0fe1f] text-[#d0fe1f] rounded hover:bg-[#d0fe1f] hover:text-black transition-all duration-200"
           >
              Capture
           </button>

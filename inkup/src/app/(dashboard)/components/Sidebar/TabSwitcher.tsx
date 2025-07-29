@@ -6,24 +6,31 @@ export interface Tab {
 }
 
 interface TabSwitcherProps {
-  tabs: readonly Tab[]; // accepts readonly arrays
+  tabs: readonly Tab[];
   activeTab: string;
   setActiveTab: (key: string) => void;
 }
 
-export default function TabSwitcher({ tabs, activeTab, setActiveTab }: TabSwitcherProps) {
+export default function TabSwitcher({
+  tabs,
+  activeTab,
+  setActiveTab,
+}: TabSwitcherProps) {
   return (
-    <div className="px-4 py-3 space-y-2 border-b border-[#222]">
+    <div className="space-y-2 border-b bg-[#1A1A1A]">
       {tabs.map((tab) => (
-        <div key={tab.key}>
-          <button
-            onClick={() => setActiveTab(tab.key)}
-            className="w-full flex justify-between items-center text-left text-gray-300 bg-[#1A1A1A] px-3 py-2 rounded-md hover:bg-[#252525] transition"
-          >
-            {tab.label}
-            <span>{activeTab === tab.key ? '▲' : '▼'}</span>
-          </button>
-        </div>
+        <button
+          key={tab.key}
+          onClick={() => setActiveTab(tab.key)}
+          className={`w-full flex justify-between items-center text-left text-sm px-4 py-3 transition rounded-none ${
+            activeTab === tab.key
+              ? 'bg-[#252525] text-white'
+              : 'text-gray-300 hover:bg-[#2a2a2a]'
+          }`}
+        >
+          {tab.label}
+          <span>{activeTab === tab.key ? '▲' : '▼'}</span>
+        </button>
       ))}
     </div>
   );

@@ -12,13 +12,16 @@ export const uploadUserImage = asyncHandler(async (req, res) => {
 
   const url = await uploadImageToCloudinary(file.path);
 
-  const generation = await prisma.generation.create({
-    data: {
-      userId,
-      userImageUrl: url,
-      status: 'PENDING',
+const generation = await prisma.generation.create({
+  data: {
+    user: {
+      connect: { id: userId },
     },
-  });
+    userImageUrl: url,
+    status: 'PENDING',
+  },
+});
+
 
   return new ApiResponseHandler(200, 'User image uploaded', generation).send(res);
 });
@@ -43,10 +46,25 @@ export const uploadItemImage = asyncHandler(async (req, res) => {
 
   if (!generation) throw new ApiErrorHandler(404, 'User image must be uploaded first');
 
-  const updated = await prisma.generation.update({
-    where: { id: generation.id },
-    data: { itemImageUrl: url },
+  let asset = await prisma.generationAsset.findFirst({
+    where: {
+      generationId: generation.id,
+    },
   });
 
-  return new ApiResponseHandler(200, 'Item image uploaded', updated).send(res);
+  if (asset) {
+    asset = await prisma.generationAsset.update({
+      where: { id: asset.id },
+      data: { itemImageUrl: url },
+    });
+  } else {
+    asset = await prisma.generationAsset.create({
+      data: {
+        generationId: generation.id,
+        itemImageUrl: url,
+      },
+    });
+  }
+
+  return new ApiResponseHandler(200, 'Item image uploaded', asset).send(res);
 });

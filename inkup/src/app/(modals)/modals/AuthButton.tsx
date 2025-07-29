@@ -1,4 +1,4 @@
-// components/AuthButton.tsx
+
 import React from 'react';
 import { IconType } from 'react-icons';
 
@@ -22,7 +22,7 @@ export default function AuthButton({ Icon, label, onClick, href, disabled }: Aut
     return (
       <a
         href={href}
-        className="bg-white text-black py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="bg-[#f8f8f8] font-medium text-[#1d1d1d] py-2 px-4 rounded-2xl flex items-center justify-center gap-2 hover:shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {content}
       </a>
@@ -33,7 +33,7 @@ export default function AuthButton({ Icon, label, onClick, href, disabled }: Aut
     <button
       onClick={onClick}
       disabled={disabled}
-      className="bg-white text-black py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      className="bg-[#f8f8f8] font-medium text-[#1d1d1d] py-2 px-4 rounded-2xl flex items-center justify-center gap-2 hover:shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {content}
     </button>

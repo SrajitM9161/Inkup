@@ -26,41 +26,36 @@ export default function ItemUploadModal({ isOpen, onClose }: ItemUploadModalProp
       return;
     }
 
-    try {
-      setIsUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        setItemImage(base64);
-        toast.success('Item image uploaded!');
-        onClose();
+    setIsUploading(true);
 
-        try {
-          const result = await uploadItemImage(itemFile);
-          console.log('[DEBUG] Uploaded to server:', result);
-          toast.success('Item image also saved to server!');
-        } catch (apiErr) {
-          console.error('[DEBUG] Item Upload API Error:', apiErr);
-          toast.error('Saved locally but failed to upload to server');
-        }
-      };
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
+      setItemImage(base64);
+      toast.success('Item image uploaded!');
+      onClose();
 
-      reader.readAsDataURL(itemFile);
-    } catch (error) {
-      console.error('[DEBUG] Upload Error:', error);
-      toast.error('Error uploading item image!');
-    } finally {
-      setIsUploading(false);
-    }
+      try {
+        const result = await uploadItemImage(itemFile);
+        console.log('[DEBUG] Uploaded to server:', result);
+        toast.success('Item image also saved to server!');
+      } catch (apiErr) {
+        console.error('[DEBUG] Item Upload API Error:', apiErr);
+        toast.error('Saved locally but failed to upload to server');
+      } finally {
+        setIsUploading(false);
+      }
+    };
+
+    reader.readAsDataURL(itemFile);
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="w-full space-y-4 text-center">
+      <div className="mx-auto max-w-sm px-0 space-y-4 text-center">
         <h2 className="text-xl font-semibold">Upload Item</h2>
         <p className="text-sm text-gray-400">Upload an item image to place or design with.</p>
 
-        {/* Preview */}
         {itemFile && (
           <Image
             src={URL.createObjectURL(itemFile)}
@@ -71,15 +66,15 @@ export default function ItemUploadModal({ isOpen, onClose }: ItemUploadModalProp
           />
         )}
 
-        {/* Upload Button */}
         <div className="flex justify-center">
           <button
             onClick={() => inputRef.current?.click()}
-            className="px-3 py-2 text-sm bg-cyan-400 text-black rounded hover:bg-cyan-300 flex items-center gap-1"
+            className="px-3 py-2 text-sm bg-[#D0FE17] text-black rounded hover:bg-[#c6f42c] hover:text-black hover:font-semibold flex items-center gap-1"
           >
             <ImagePlus size={16} />
             Upload Image
           </button>
+
           <input
             ref={inputRef}
             type="file"
@@ -94,11 +89,10 @@ export default function ItemUploadModal({ isOpen, onClose }: ItemUploadModalProp
           />
         </div>
 
-        {/* Confirm Upload */}
         <button
           onClick={handleUpload}
           disabled={!itemFile || isUploading}
-          className="w-full mt-2 px-4 py-2 text-sm border border-cyan-400 text-cyan-400 rounded hover:bg-cyan-400 hover:text-black transition disabled:opacity-50"
+          className="w-full mt-2 px-4 py-2 text-sm border border-[#D0FE17] text-[#D0FE17] rounded hover:bg-[#D0FE17] hover:text-black hover:font-bold transition disabled:opacity-90"
         >
           {isUploading ? 'Uploading...' : 'Confirm & Upload'}
         </button>

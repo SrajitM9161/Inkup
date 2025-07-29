@@ -16,7 +16,8 @@ export default function ImageGrid({
   onSelect: (img: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 p-2">
+    <div className="h-full overflow-y-auto grid grid-cols-2 gap-[6px] p-1">
+
       {images.map((item, index) => (
         <ImageCard key={index} img={item.image} onClick={() => onSelect(item.image)} />
       ))}

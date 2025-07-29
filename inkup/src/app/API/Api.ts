@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
-  withCredentials: true, // ✅ Always send cookies
+  withCredentials: true,
 });
 
 export const registerUser = async (data: {
@@ -24,23 +24,6 @@ export const getMe = async () => {
 
 
 
-// export const getUserFromToken = async (): Promise<any> => {
-//   const token = localStorage.getItem('token');
-//   if (!token) throw new Error('No token found');
-
-//   const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/profile`, {
-//     headers: {
-//       Authorization: `Bearer ${token}`,
-//     },
-//   });
-
-//   if (!res.ok) throw new Error('Invalid token');
-
-//   const data = await res.json();
-//   return data.user;
-// };
-
-
 
 export const uploadUserImage = async (userFile: File) => {
   const formData = new FormData();
@@ -50,7 +33,7 @@ export const uploadUserImage = async (userFile: File) => {
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/upload/user-image`,
     formData,
     {
-      withCredentials: true, // ✅ send session cookie
+      withCredentials: true, 
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -69,7 +52,7 @@ export const uploadItemImage = async (itemFile: File) => {
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/upload/item-image`,
     formData,
     {
-      withCredentials: true, // ✅ send session cookie
+      withCredentials: true, 
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -80,4 +63,43 @@ export const uploadItemImage = async (itemFile: File) => {
 };
 
 
+export const generateTryonImage = async (
+  humanBase64: string,
+  tattooBase64: string,
+  maskBase64: string
+): Promise<string> => {
+  const toFile = async (dataUrl: string, name: string): Promise<File> => {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], name, { type: 'image/png' });
+  };
+
+  const humanFile = await toFile(humanBase64, 'human.png');
+  const tattooFile = await toFile(tattooBase64, 'tattoo.png');
+  const maskFile = await toFile(maskBase64, 'mask.png');
+
+  const formData = new FormData();
+  formData.append('humanImage', humanFile);
+  formData.append('tattooImage', tattooFile);
+  formData.append('maskImage', maskFile);
+
+  const res = await api.post('/api/tryon/tryon', formData, {
+    withCredentials: true,
+  });
+
+  const generationId = res.data?.data?.generationId;
+  if (!generationId) throw new Error('Generation failed, no ID returned');
+
+  // ✅ Fetch image from DB using generationId
+  const imageRes = await api.get(`/api/tryon/image/${generationId}`, {
+    withCredentials: true,
+  });
+
+  return imageRes.data?.data?.outputImageUrl;
+};
+
+
 export default api;
+
+
+
