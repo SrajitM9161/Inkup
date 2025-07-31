@@ -55,7 +55,7 @@ export default function DashboardPage() {
       toast.loading('Generating...');
       setIsGenerating(true);
 
-      // ✅ Safe usage — TS ensures userImage/itemImage are strings
+    
       const generated = await generateTryonImage(userImage, itemImage, mask);
 
       setUserImage(generated);
@@ -107,15 +107,15 @@ export default function DashboardPage() {
               <Menu size={16} />
               Catalog
             </button>
-            <Image src="/logo-icon.svg" alt="Logo" width={32} height={32} />
+            <Image src="/logoinkara.png" alt="Logo" width={32} height={32} />
           </div>
 
           {/* Main Canvas Area */}
           <main className="flex-1 overflow-y-auto px-4 py-6 flex flex-col items-center gap-6">
             {!userImage || !itemImage ? (
               <div className="text-center mt-10">
-                <Image src="/logo-icon.svg" alt="Logo" width={64} height={64} className="mx-auto mb-3" />
-                <h1 className="text-3xl font-bold">INKUP GENERATE</h1>
+                <Image src="/logoinkara.png" alt="Logo" width={100} height={164} className="mx-auto mb-3" />
+                <h1 className="text-3xl font-bold">INAKARA AI GENERATE</h1>
                 <p className="text-sm text-gray-400">
                   Draw, edit, erase — just <span className="text-white font-medium">clip and create</span>
                 </p>

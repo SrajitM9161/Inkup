@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { useToolStore } from '../../lib/store';
 import { Plus, Minus, Trash2 } from 'lucide-react';
@@ -28,6 +28,18 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   const { scale, zoomIn, zoomOut, handleWheelZoom } = useCanvasZoom();
   const { clearCanvas } = useCanvasExport(canvasRef);
 
+  const [loadedImage, setLoadedImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (resultImage) {
+      const img = new Image();
+      img.src = resultImage;
+      img.onload = () => setLoadedImage(resultImage);
+    } else {
+      setLoadedImage(null);
+    }
+  }, [resultImage]);
+
   useEffect(() => {
     if (!canvasRef.current) return;
     canvasRef.current.eraseMode(tool === 'eraser');
@@ -38,8 +50,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
     clearPersistedImages();
   };
 
-  // The image to show underneath the canvas (either original or generated)
-  const baseImage = resultImage || userImage;
+  const baseImage = loadedImage || userImage;
 
   return (
     <div
@@ -75,12 +86,12 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
         <img
           src={baseImage}
           alt="Displayed Image"
-          className="absolute z-10 object-contain w-full h-full transition-transform duration-300"
+          className="absolute z-10 object-contain w-full h-full transition-transform duration-300 fade-in"
           style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}
         />
       )}
 
-      {/* Drawing Canvas (only when not yet generating result) */}
+      {/* Drawing Canvas */}
       {userImage && !resultImage && (
         <ReactSketchCanvas
           ref={canvasRef}
@@ -96,8 +107,8 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
       {/* Mask overlay */}
       {mask && <MaskOverlay mask={mask} opacity={maskOpacity} />}
 
-      {/* Loader */}
-      {isGenerating && (
+      {/* Loader while generating or image not yet ready */}
+      {(isGenerating || (resultImage && !loadedImage)) && (
         <div className="absolute inset-0 z-50 bg-black/50 flex items-center justify-center">
           <Loader />
         </div>

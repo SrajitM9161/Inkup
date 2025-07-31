@@ -16,13 +16,13 @@ export default function MainLanding() {
       {/* Pass modal handler to HomePage */}
       <HomePage onOpenModal={() => setShowModal(true)} />
 
-      {/* Modal with required props */}
+   
       <SignupModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        onSubmit={({ token }: { token: string }) => {
-          localStorage.setItem('token', token);
-        }}
+       onSubmit={() => {
+}}
+
         onSuccess={async () => {
           await refreshAuth();
           setShowModal(false);
@@ -30,9 +30,9 @@ export default function MainLanding() {
       />
 
       {/* Pricing Section */}
-      <div className="bg-dot-pattern flex gap-6 flex-wrap justify-center">
+      {/* <div className="bg-dot-pattern flex gap-6 flex-wrap justify-center">
         <PricingSection />
-      </div>
+      </div> */}
     </main>
     </RedirectIfAuthenticated>
   );

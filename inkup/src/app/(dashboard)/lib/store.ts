@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Tool, ModelType } from '../components/types/tool';
 import type { Bookmark } from '../components/types/bookmark';
 
+// ========== TYPES ==========
 export interface OutputImage {
   generationId: string;
   assetId: string;
@@ -10,21 +11,18 @@ export interface OutputImage {
 }
 
 interface ToolState {
-  // === USER CANVAS ===
   userImage: string | null;
   uploadedFile: File | null;
   isUploadModalOpen: boolean;
 
-  // === ITEM CANVAS ===
   itemImage: string | null;
   customItemImage: string | null;
   itemTool: Tool;
   itemStrokeWidth: number;
 
-  // === COMMON ===
   mask: string | null;
   resultImage: string | null;
-  isGenerating?: boolean;
+  isGenerating: boolean;
   tool: Tool;
   strokeWidth: number;
   bookmarks: Bookmark[];
@@ -34,7 +32,6 @@ interface ToolState {
   penColor: string;
   generatedItems: string[];
 
-  // === METHODS ===
   setUserImage: (img: string | null) => void;
   setUploadedFile: (file: File | null) => void;
   setUploadModalOpen: (val: boolean) => void;
@@ -44,8 +41,8 @@ interface ToolState {
   setItemTool: (tool: Tool) => void;
   setItemStrokeWidth: (width: number) => void;
 
-  setMask: (mask: string) => void;
-  setResultImage: (res: string) => void;
+  setMask: (mask: string | null) => void;
+  setResultImage: (res: string | null) => void;
   setIsGenerating: (val: boolean) => void;
   setTool: (tool: Tool) => void;
   setStrokeWidth: (width: number) => void;
@@ -67,15 +64,15 @@ interface ToolState {
   redo: () => void;
 }
 
-// === OUTPUT IMAGES ===
 interface OutputStoreState {
   outputImages: OutputImage[];
   setOutputImages: (images: OutputImage[]) => void;
   addOutputImage: (image: OutputImage) => void;
   clearOutputImages: () => void;
+  appendOutputImages: (images: OutputImage[]) => void;
 }
 
-// === TOOL STORE ===
+// ========== TOOL STORE ==========
 export const useToolStore = create<ToolState>((set) => ({
   userImage: null,
   uploadedFile: null,
@@ -98,10 +95,7 @@ export const useToolStore = create<ToolState>((set) => ({
   penColor: '#ff0000',
   generatedItems: [],
 
-  setUserImage: (img) => {
-    console.log('[store] setUserImage called with:', img);
-    set({ userImage: img });
-  },
+  setUserImage: (img) => set({ userImage: img }),
   setUploadedFile: (file) => set({ uploadedFile: file }),
   setUploadModalOpen: (val) => set({ isUploadModalOpen: val }),
 
@@ -158,12 +152,10 @@ export const useToolStore = create<ToolState>((set) => ({
       userImage: null,
       uploadedFile: null,
       isUploadModalOpen: false,
-
       itemImage: null,
       customItemImage: null,
       itemTool: 'pen',
       itemStrokeWidth: 5,
-
       mask: null,
       resultImage: null,
       isGenerating: false,
@@ -178,18 +170,15 @@ export const useToolStore = create<ToolState>((set) => ({
     }),
 
   clearPersistedImages: () => {
-    set({
-      userImage: null,
-      itemImage: null,
-    });
+    set({ userImage: null, itemImage: null });
     if (typeof window !== 'undefined') {
       localStorage.removeItem('tool-store');
     }
   },
 }));
 
-// === OUTPUT STORE ===
-export const useOutputStore = create<OutputStoreState>((set) => ({
+// ========== OUTPUT STORE ==========
+export const useOutputStore = create<OutputStoreState>((set, get) => ({
   outputImages: [],
 
   setOutputImages: (images) => set({ outputImages: images }),
@@ -200,4 +189,15 @@ export const useOutputStore = create<OutputStoreState>((set) => ({
     })),
 
   clearOutputImages: () => set({ outputImages: [] }),
+
+  appendOutputImages: (images) => {
+    const existing = get().outputImages;
+
+    const combined = [...existing, ...images];
+
+    // Deduplicate by `assetId`
+    const unique = Array.from(new Map(combined.map(img => [img.assetId, img])).values());
+
+    set({ outputImages: unique });
+  },
 }));

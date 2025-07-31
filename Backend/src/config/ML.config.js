@@ -1,4 +1,3 @@
-// src/config/ML.config.js
 import axios from 'axios';
 
 const ML_BASE_URL = `${process.env.RUNPOD}`;

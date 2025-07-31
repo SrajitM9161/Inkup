@@ -1,20 +1,22 @@
 'use client'
+
 import { useState } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
+import { toast } from 'react-hot-toast'
+import * as z from 'zod'
+
 import { registerUser, getMe } from '../../API/Api'
 import Stepper from '../../components/Stepper'
 
 const formSchema = z.object({
-  businessName: z.string().min(2, "Business name required"),
-  fullName: z.string().min(2, "Full name required"),
-  email: z.string().email("Enter valid email"),
-  password: z.string().min(8, "Password must be 8+ chars"),
-  phoneNumber: z.string().min(10, "Phone must be 10+ digits"),
-  address: z.string().min(2, "Address required"),
+  businessName: z.string().min(2, 'Business name required'),
+  fullName: z.string().min(2, 'Full name required'),
+  email: z.string().email('Enter valid email'),
+  password: z.string().min(8, 'Password must be 8+ chars'),
+  phoneNumber: z.string().min(10, 'Phone must be 10+ digits'),
+  address: z.string().min(2, 'Address required'),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -40,65 +42,87 @@ export default function SignupStepperForm({ onSubmit }: Props) {
     },
   })
 
-  const { register, handleSubmit, formState: { errors }, watch } = methods
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = methods
 
   const handleFinalSubmit = async (data: FormData) => {
-    try {
-      const payload = {
-        businessName: data.businessName,
-        name: data.fullName,
-        email: data.email,
-        password: data.password,
-        phoneNumber: data.phoneNumber,
-        address: data.address,
-      }
+    const payload = {
+      businessName: data.businessName,
+      name: data.fullName,
+      email: data.email,
+      password: data.password,
+      phoneNumber: data.phoneNumber,
+      address: data.address,
+    }
 
+    try {
       const res = await registerUser(payload)
 
-      if (res.success) {
-        toast.success('🎉 Registered successfully!')
-        setStep(steps.length - 1)
-
-        // ✅ Wait for session cookie to be set
-        setTimeout(async () => {
-          try {
-            const user = await getMe()
-            if (user) {
-              onSubmit?.()
-              router.push('/dashboard')
-            }
-          } catch (e) {
-            console.error('Auth check failed:', e)
-            toast.error('Auth check failed. Please log in manually.')
-            router.push('/')
-          }
-        }, 1000)
-      } else {
+      if (!res.success) {
         toast.error(res.message || 'Signup failed')
+        return
       }
+
+      toast.success('🎉 Registered successfully!')
+      setTimeout(async () => {
+        try {
+          const user = await getMe()
+          if (!user) throw new Error('User session not found')
+          onSubmit?.()
+          router.push('/dashboard')
+        } catch (err) {
+          toast.error('Auth check failed. Please login.')
+          router.push('/')
+        }
+      }, 200)
     } catch (err: any) {
       if (err.response?.status === 409) {
-        toast.error("Email already registered. Try logging in.")
+        toast.error('Email already registered. Try logging in.')
         router.push('/login')
       } else {
-        console.error(err)
-        toast.error('Registration failed. Try again.')
+        console.error('Registration error:', err)
+        toast.error('Registration failed. Please try again.')
       }
     }
   }
+  const FormGroup = ({
+    label,
+    name,
+    type = 'text',
+    placeholder,
+  }: {
+    label: string
+    name: keyof FormData
+    type?: string
+    placeholder: string
+  }) => (
+    <div className="mb-4">
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
+        {label}*
+      </label>
+      <input
+        id={name}
+        {...register(name)}
+        type={type}
+        placeholder={placeholder}
+        className="input w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      {errors[name] && (
+        <p className="text-red-500 text-xs mt-1">{errors[name]?.message}</p>
+      )}
+    </div>
+  )
 
   const steps = [
     {
       label: 'Business Info',
       content: (
         <>
-          <label className="block text-sm">Business Name*</label>
-          <input {...register('businessName')} className="input" placeholder="Business name" />
-          {errors.businessName && <p className="text-red-400 text-xs">{errors.businessName.message}</p>}
-
-          <label className="block text-sm mt-4">Full Name*</label>
-          <input {...register('fullName')} className="input" placeholder="Full name" />
-          {errors.fullName && <p className="text-red-400 text-xs">{errors.fullName.message}</p>}
+          <FormGroup label="Business Name" name="businessName" placeholder="e.g. Inkify Studio" />
+          <FormGroup label="Full Name" name="fullName" placeholder="e.g. Jane Doe" />
         </>
       ),
     },
@@ -106,13 +130,8 @@ export default function SignupStepperForm({ onSubmit }: Props) {
       label: 'Account Info',
       content: (
         <>
-          <label className="block text-sm">Email*</label>
-          <input {...register('email')} className="input" placeholder="Email" />
-          {errors.email && <p className="text-red-400 text-xs">{errors.email.message}</p>}
-
-          <label className="block text-sm mt-4">Password*</label>
-          <input {...register('password')} className="input" type="password" placeholder="Password" />
-          {errors.password && <p className="text-red-400 text-xs">{errors.password.message}</p>}
+          <FormGroup label="Email" name="email" type="email" placeholder="e.g. jane@example.com" />
+          <FormGroup label="Password" name="password" type="password" placeholder="Create a strong password" />
         </>
       ),
     },
@@ -120,37 +139,17 @@ export default function SignupStepperForm({ onSubmit }: Props) {
       label: 'Contact Info',
       content: (
         <>
-          <label className="block text-sm">Phone Number*</label>
-          <input {...register('phoneNumber')} className="input" placeholder="Phone Number" />
-          {errors.phoneNumber && <p className="text-red-400 text-xs">{errors.phoneNumber.message}</p>}
-
-          <label className="block text-sm mt-4">Address*</label>
-          <input {...register('address')} className="input" placeholder="Address" />
-          {errors.address && <p className="text-red-400 text-xs">{errors.address.message}</p>}
+          <FormGroup label="Phone Number" name="phoneNumber" placeholder="e.g. 9876543210" />
+          <FormGroup label="Address" name="address" placeholder="e.g. 123 Main Street, Delhi" />
         </>
-      ),
-    },
-    {
-      label: 'Success',
-      content: (
-        <div className="text-center">
-          <div className="text-green-400 text-4xl mb-2">🎉</div>
-          <h2 className="text-xl font-semibold">Welcome, {watch('fullName')}</h2>
-          <p className="text-cyan-400 text-sm">You’re now registered with Inkup</p>
-        </div>
       ),
     },
   ]
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(handleFinalSubmit)}>
-        <Stepper
-          steps={steps}
-          step={step}
-          setStep={setStep}
-          onComplete={handleSubmit(handleFinalSubmit)}
-        />
+      <form onSubmit={handleSubmit(handleFinalSubmit)} className="w-full max-w-md mx-auto">
+        <Stepper steps={steps} step={step} setStep={setStep} />
       </form>
     </FormProvider>
   )

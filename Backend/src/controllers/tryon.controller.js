@@ -107,7 +107,6 @@ export const generateTryon = asyncHandler(async (req, res) => {
 
     const uploadedOutputUrl = await uploadImageToCloudinary(outputTempPath);
 
-    // ✅ Save the assets in separate row
     await prisma.generationAsset.create({
       data: {
         generationId: generation.id,
@@ -117,7 +116,6 @@ export const generateTryon = asyncHandler(async (req, res) => {
       },
     });
 
-    // ✅ Mark generation complete
     await prisma.generation.update({
       where: { id: generation.id },
       data: { status: "COMPLETED" },

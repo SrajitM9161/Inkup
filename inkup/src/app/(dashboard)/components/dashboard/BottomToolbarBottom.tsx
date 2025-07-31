@@ -7,7 +7,7 @@ interface BottomToolbarBottomProps {
   onUploadItemClick: () => void;
   onGenerate: () => void;
   isGenerating: boolean;
-  disableGenerate?: boolean; // <-- Add this line
+  disableGenerate?: boolean; 
 }
 
 export default function BottomToolbarBottom({
@@ -15,7 +15,7 @@ export default function BottomToolbarBottom({
   onUploadItemClick,
   onGenerate,
   isGenerating,
-  disableGenerate = false, // default to false if not provided
+  disableGenerate = false, 
 }: BottomToolbarBottomProps) {
   return (
     <div className="flex flex-col items-center justify-between gap-3 w-full sm:flex-row sm:items-center">

@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 export default function ImageCard({
   img,
-  onClick,
+onClick
 }: {
   img: string;
   onClick: () => void;

@@ -4,12 +4,10 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import CatalogTab from './tab-content/CatalogTab';
 import GeneratedTab from './tab-content/GeneratedTab';
-import HistoryTab from './tab-content/HistoryTab';
 
 const defaultTabs = [
-  { key: 'catalog', label: 'Workspace' },
-  { key: 'generated', label: 'Inkup workspace' },
-  { key: 'history', label: 'User Workspace' },
+  { key: 'catalog', label: 'InkarraAI workspace' },
+  { key: 'generated', label: 'User Workspace' },
 ] as const;
 
 type Tab = (typeof defaultTabs)[number];
@@ -26,9 +24,8 @@ export default function CatalogSidebar({
   const [isOpen, setIsOpen] = useState(false);
 
   const renderTabContent = () => {
-    if (activeTab.key === 'catalog') return <CatalogTab onSelect={onClose} />;
-    if (activeTab.key === 'generated') return <GeneratedTab onSelect={onClose} />;
-    if (activeTab.key === 'history') return <HistoryTab onSelect={onClose} />;
+    if (activeTab.key === 'catalog') return <CatalogTab />;
+    if (activeTab.key === 'generated') return <GeneratedTab />;
   };
 
   return (
@@ -73,8 +70,7 @@ export default function CatalogSidebar({
                   key={tab.key}
                   onClick={() => {
                     setActiveTab(tab);
-                    setIsOpen(false);
-                    onClose?.();
+                    setIsOpen(false); // Close dropdown only
                   }}
                   className={`cursor-pointer px-4 py-2 hover:bg-[#1A1A1A] ${
                     activeTab.key === tab.key
@@ -90,7 +86,7 @@ export default function CatalogSidebar({
         </div>
       </div>
 
-      {/* Scrollable content area */}
+  
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         {renderTabContent()}
       </div>

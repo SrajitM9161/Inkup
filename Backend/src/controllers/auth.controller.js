@@ -11,14 +11,16 @@ const registerUser = asyncHandler(async (req, res, next) => {
   const parsed = signupSchema.safeParse(req.body);
 
   if (!parsed.success) {
-    console.log('Zod Validation Error:', parsed.error.flatten().fieldErrors);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Zod Validation Error:', parsed.error.flatten().fieldErrors);
+    }
+
     return next(
-      new ApiErrorHandler(400, 'Validation Failed', parsed.error.flatten().fieldErrors)
+      new ApiErrorHandler(400, 'Validation failed', parsed.error.flatten().fieldErrors)
     );
   }
 
   const { email, password, name, phoneNumber, businessName, address } = parsed.data;
-
   const existingUser = await prisma.user.findUnique({ where: { email } });
 
   if (existingUser) {
@@ -38,19 +40,24 @@ const registerUser = asyncHandler(async (req, res, next) => {
     },
   });
 
-  const token = generateToken(newUser);
+
+  const token = generateToken({
+    id: newUser.id,
+    email: newUser.email,
+  });
+
+  const isProd = process.env.NODE_ENV === 'production';
 
   res.setHeader(
     'Set-Cookie',
     cookie.serialize('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      secure: isProd,              
+      sameSite: isProd ? 'strict' : 'lax',
+      maxAge: 7 * 24 * 60 * 60,    
       path: '/',
     })
   );
-
   return new ApiResponseHandler(201, 'Account created successfully', {
     user: {
       id: newUser.id,

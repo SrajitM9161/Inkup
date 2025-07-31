@@ -7,7 +7,7 @@ import { FaApple, FaInstagram } from 'react-icons/fa';
 import { FiMail } from 'react-icons/fi';
 import AuthButton from './AuthButton';
 import SignupStepperForm from './TattooStepperForm';
-
+import Image from 'next/image';
 export default function SignupModal({
   isOpen,
   onClose,
@@ -43,7 +43,17 @@ export default function SignupModal({
           <X size={20} />
         </button>
 
-        <div className="text-center mt-6 mb-0 text-[22px] font-['Playball']">Logo</div>
+ <div className="flex justify-center items-center py-6">
+  <Image
+    src="/logoinkara.png"
+    alt="Logo"
+    width={120}
+    height={40}
+    className="object-contain"
+  />
+</div>
+
+
   
          {showEmailForm ? (
           <SignupStepperForm
@@ -61,16 +71,16 @@ export default function SignupModal({
               label="Continue with Google"
               onClick={() => (window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google`)}
             />
-            <AuthButton
+            {/* <AuthButton
               Icon={FaApple}
               label="Continue with Apple"
               href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/apple`}
-            />
-            <AuthButton
+            /> */}
+            {/* <AuthButton
               Icon={FaInstagram}
               label="Continue with Instagram"
               href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/instagram`}
-            />
+            /> */}
             <div className="flex items-center my-0">
               <div className="flex-grow h-px bg-gray-400"></div>
               <span className="mx-2 text-sm text-gray-300">Or</span>

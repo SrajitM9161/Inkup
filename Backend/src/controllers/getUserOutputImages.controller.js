@@ -4,44 +4,50 @@ import ApiErrorHandler from '../utils/apiErrorHandler.js';
 import prisma from '../../prisma/prismaClient.js';
 
 const getUserOutputImages = asyncHandler(async (req, res) => {
-  const { userId } = req.params;
+  const userId = req.user?.id;
 
   if (!userId) {
-    throw new ApiErrorHandler(400, 'User ID is required');
+    throw new ApiErrorHandler(401, 'Unauthorized: user ID not found in token');
   }
 
   const generations = await prisma.generation.findMany({
     where: {
-      userId: userId,
+      userId,
       status: 'COMPLETED',
     },
     include: {
-      assets: true,
+      assets: {
+        where: {
+          outputImageUrl: {
+            not: null,
+          },
+        },
+        select: {
+          id: true,
+          outputImageUrl: true,
+          createdAt: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
     },
   });
 
-  if (!generations || generations.length === 0) {
-    throw new ApiErrorHandler(404, 'No completed generations found for this user');
-  }
-
-  const outputImages = generations.flatMap((generation) =>
-    generation.assets
-      .filter((asset) => asset.outputImageUrl)
-      .map((asset) => ({
-        generationId: generation.id,
-        assetId: asset.id,
-        outputImageUrl: asset.outputImageUrl,
-        createdAt: asset.createdAt,
-      }))
+  const outputImages = generations.flatMap(({ id: generationId, assets }) =>
+    assets.map(({ id: assetId, outputImageUrl, createdAt }) => ({
+      generationId,
+      assetId,
+      outputImageUrl,
+      createdAt,
+    }))
   );
 
-  if (outputImages.length === 0) {
+  if (!outputImages.length) {
     throw new ApiErrorHandler(404, 'No output images found for this user');
   }
 
-  return new ApiResponseHandler(200, 'User output images fetched successfully', {
-    outputImages,
-  }).send(res);
+  return new ApiResponseHandler(200, 'Output images fetched successfully', { outputImages }).send(res);
 });
 
-export default  getUserOutputImages
+export default getUserOutputImages;

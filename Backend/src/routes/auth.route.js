@@ -32,7 +32,6 @@ router.get(
   }
 );
 
-// Register Route
 router.post('/register', asyncHandler(registerUser));
 
 export default router;

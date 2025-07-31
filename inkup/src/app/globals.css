@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-
 @layer utilities {
   .bg-dot-pattern {
     background-color: #0D0D0D;
@@ -11,6 +10,14 @@
 }
 
 
+.fade-in {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 
 
 

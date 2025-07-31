@@ -5,6 +5,7 @@ const api = axios.create({
   withCredentials: true,
 });
 
+
 export const registerUser = async (data: {
   name: string;
   email: string;
@@ -21,7 +22,6 @@ export const getMe = async () => {
   const res = await api.get('/me');
   return res.data;
 };
-
 
 
 

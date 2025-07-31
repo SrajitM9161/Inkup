@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('[Auth] Authenticated user:', data);
       setAuthenticated(true);
     } catch (err) {
-      console.error('[Auth] Not authenticated');
+       console.warn('[Auth] Not authenticated');
       setAuthenticated(false);
     } finally {
       setLoading(false);
