@@ -21,11 +21,13 @@ export default function CameraCapture({ onCapture, onCancel }: CameraCaptureProp
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
             videoRef.current?.play().catch((err) => {
+               console.log(err)
               console.warn('[CameraCapture] Video play failed:', err);
             });
           };
         }
       } catch (err) {
+         console.log(err)
         toast.error('Unable to access camera');
         onCancel();
       }

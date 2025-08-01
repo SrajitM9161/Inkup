@@ -3,7 +3,6 @@
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FcGoogle } from 'react-icons/fc';
-import { FaApple, FaInstagram } from 'react-icons/fa';
 import { FiMail } from 'react-icons/fi';
 import AuthButton from './AuthButton';
 import SignupStepperForm from './TattooStepperForm';

@@ -3,6 +3,9 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+// Disable static rendering
+export const dynamic = 'force-dynamic';
+
 const AuthCallbackPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();

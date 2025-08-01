@@ -22,6 +22,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/(landing)/landing/page.tsx", "src/app/(landing)/landing/layout.tsx", "src/app/Constants/constant.ts", "src/app/(dashboard)/dashboard/page.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/(landing)/landing/Landing.tsx", "src/app/(landing)/landing/layout.tsx", "src/app/Constants/constant.ts", "src/app/(dashboard)/dashboard/page.tsx"],
   "exclude": ["node_modules"]
 }

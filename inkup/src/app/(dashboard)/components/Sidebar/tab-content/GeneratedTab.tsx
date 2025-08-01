@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
@@ -12,7 +14,7 @@ interface OutputImage {
   createdAt: string;
 }
 
-export default function GeneratedOutputTab({ onSelect }: { onSelect?: () => void }) {
+export default function GeneratedOutputTab() {
   const { outputImages, appendOutputImages } = useOutputStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,6 +23,7 @@ export default function GeneratedOutputTab({ onSelect }: { onSelect?: () => void
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<HTMLDivElement | null>(null);
+  const observerInstance = useRef<IntersectionObserver | null>(null);
 
   const fetchOutputImages = useCallback(async () => {
     if (!hasMore || loading) return;
@@ -38,19 +41,36 @@ export default function GeneratedOutputTab({ onSelect }: { onSelect?: () => void
         appendOutputImages(newImages);
         setPage((prev) => prev + 1);
       }
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to fetch images');
+    } catch (err: unknown) {
+
+
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as any).response?.data?.message === 'string'
+      ) {
+        setError((err as any).response.data.message);
+      } else {
+        setError('Failed to fetch images');
+      }
     } finally {
       setLoading(false);
     }
   }, [page, hasMore, loading, appendOutputImages]);
 
   useEffect(() => {
-    fetchOutputImages(); // Load initial page
-  }, []);
+    fetchOutputImages();
+  }, [fetchOutputImages]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    if (!observerRef.current) return;
+
+    if (observerInstance.current) {
+      observerInstance.current.disconnect();
+    }
+
+    observerInstance.current = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
           fetchOutputImages();
@@ -62,11 +82,12 @@ export default function GeneratedOutputTab({ onSelect }: { onSelect?: () => void
       }
     );
 
-    const currentObserver = observerRef.current;
-    if (currentObserver) observer.observe(currentObserver);
+    observerInstance.current.observe(observerRef.current);
 
     return () => {
-      if (currentObserver) observer.unobserve(currentObserver);
+      if (observerInstance.current) {
+        observerInstance.current.disconnect();
+      }
     };
   }, [fetchOutputImages, hasMore, loading]);
 

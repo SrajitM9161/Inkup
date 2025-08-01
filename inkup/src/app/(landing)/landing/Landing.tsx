@@ -28,16 +28,21 @@ export default function HomePage({ onOpenModal }: HomePageProps) {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => setShowFooter(entry.isIntersecting),
-      { threshold: 0.3 }
-    );
-    if (triggerRef.current) observer.observe(triggerRef.current);
-    return () => {
-      if (triggerRef.current) observer.unobserve(triggerRef.current);
-    };
-  }, []);
+useEffect(() => {
+  const target = triggerRef.current;
+  if (!target) return;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => setShowFooter(entry.isIntersecting),
+    { threshold: 0.3 }
+  );
+
+  observer.observe(target);
+
+  return () => {
+    observer.unobserve(target);
+  };
+}, []);
 
   const scrollToFooter = () => {
     footerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });

@@ -1,8 +1,6 @@
-// ===== DashboardPage.tsx (Production-Ready Fix) =====
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRef, useState, Suspense } from 'react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { Menu } from 'lucide-react';
@@ -16,6 +14,7 @@ import ItemUploadModal from '../components/dashboard/Modals/Uploadtatoo';
 import CatalogSidebar from '../components/Sidebar/CatalogSidebar';
 import ProtectedRoute from './ProtectedRoute';
 import { generateTryonImage } from '../../API/Api';
+import TokenHandler from '../../components/TokenHandler';
 
 export default function DashboardPage() {
   const [sidebarOpenMobile, setSidebarOpenMobile] = useState(false);
@@ -23,8 +22,7 @@ export default function DashboardPage() {
   const [itemUploadModalOpen, setItemUploadModalOpen] = useState(false);
 
   const canvasRef = useRef<ReactSketchCanvasRef | null>(null);
-  const searchParams = useSearchParams();
-  const router = useRouter();
+
 
   const {
     userImage,
@@ -35,14 +33,6 @@ export default function DashboardPage() {
     setResultImage,
     setUserImage,
   } = useToolStore();
-
-  useEffect(() => {
-    const token = searchParams.get('token');
-    if (token) {
-      localStorage.setItem('token', token);
-      router.replace('/dashboard');
-    }
-  }, [searchParams, router]);
 
   const handleGenerate = async () => {
     if (!canvasRef.current || !userImage || !itemImage) {
@@ -55,11 +45,10 @@ export default function DashboardPage() {
       toast.loading('Generating...');
       setIsGenerating(true);
 
-    
       const generated = await generateTryonImage(userImage, itemImage, mask);
 
       setUserImage(generated);
-      setResultImage("");
+      setResultImage('');
       canvasRef.current.clearCanvas();
       setTool('pen');
     } catch (err) {
@@ -73,6 +62,11 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
+      {/* This fixes the useSearchParams error */}
+      <Suspense fallback={null}>
+        <TokenHandler />
+      </Suspense>
+
       <div className="w-screen h-screen overflow-hidden flex flex-row-reverse bg-dot-pattern text-white">
         {/* Desktop Sidebar */}
         <div className="hidden lg:block w-[320px] shrink-0 border-l border-white/10 bg-[#0D0D0D]">
@@ -94,7 +88,6 @@ export default function DashboardPage() {
 
         {/* Main Content */}
         <div className="flex-1 h-full flex flex-col overflow-hidden relative">
-          {/* Modals */}
           <UploadModal isOpen={uploadModalOpen} onClose={() => setUploadModalOpen(false)} />
           <ItemUploadModal isOpen={itemUploadModalOpen} onClose={() => setItemUploadModalOpen(false)} />
 
@@ -126,7 +119,6 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Bottom Controls */}
             <BottomBar
               onUploadClick={() => setUploadModalOpen(true)}
               onUploadItemClick={() => setItemUploadModalOpen(true)}

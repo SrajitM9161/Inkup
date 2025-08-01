@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+
 'use client'
 
 import { useState } from 'react'
@@ -74,12 +77,14 @@ export default function SignupStepperForm({ onSubmit }: Props) {
           onSubmit?.()
           router.push('/dashboard')
         } catch (err) {
+          console.log(err)
           toast.error('Auth check failed. Please login.')
           router.push('/')
         }
       }, 200)
     } catch (err: any) {
       if (err.response?.status === 409) {
+         console.log(err)
         toast.error('Email already registered. Try logging in.')
         router.push('/login')
       } else {

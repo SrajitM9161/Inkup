@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import CatalogJson from '../../../../JSON/Catalog.json'; // adjust the path based on your structure
 
 interface CatalogItem {
@@ -16,7 +16,7 @@ export const useCatalogImages = () => {
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 10;
 
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
     if (isLoading || !hasMore) return;
     setIsLoading(true);
 
@@ -27,16 +27,16 @@ export const useCatalogImages = () => {
         setHasMore(false);
       } else {
         setImages((prev) => [...prev, ...nextItems]);
-        setPage((p) => p + 1);
+        setPage((prevPage) => prevPage + 1);
       }
 
       setIsLoading(false);
-    }, 300); 
-  };
+    }, 300);
+  }, [isLoading, hasMore, page]);
 
   useEffect(() => {
     loadMore();
-  }, []);
+  }, [loadMore]);
 
   return { images, isLoading, hasMore, loadMore };
 };

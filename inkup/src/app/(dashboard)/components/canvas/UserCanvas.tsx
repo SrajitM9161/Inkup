@@ -43,7 +43,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   useEffect(() => {
     if (!canvasRef.current) return;
     canvasRef.current.eraseMode(tool === 'eraser');
-  }, [tool]);
+  }, [tool, canvasRef]);
 
   const handleClearAll = () => {
     clearCanvas();

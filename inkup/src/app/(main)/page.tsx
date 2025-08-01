@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import HomePage from '../(landing)/landing/page';
-import PricingSection from '../components/PricingSection';
+import HomePage from '../(landing)/landing/Landing';
 import SignupModal from '../(modals)/modals/SignupModal';
 import { useAuth } from '../Hooks/useAuth.hook';
 import RedirectIfAuthenticated from '../components/RedirectIfAuthenticated';

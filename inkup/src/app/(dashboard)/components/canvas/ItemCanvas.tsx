@@ -2,7 +2,7 @@
 
 import { useToolStore } from '../../lib/store';
 import { useRef, useState } from 'react';
-
+import Image from 'next/image';
 export default function ItemImageFrame() {
   const { itemImage, setItemImage } = useToolStore();
   const dropRef = useRef<HTMLDivElement | null>(null);
@@ -44,7 +44,7 @@ export default function ItemImageFrame() {
       `}
     >
       {itemImage ? (
-        <img
+        <Image
           src={itemImage}
           alt="Item"
           className="w-full h-full object-contain"
