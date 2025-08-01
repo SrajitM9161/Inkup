@@ -3,7 +3,7 @@ import passport from '../config/auth.config.js';
 import { generateToken } from '../utils/generateToken.js';
 import registerUser from '../controllers/auth.controller.js';
 import asyncHandler from '../utils/asyncHandler.js';
-import cookie from 'cookie';
+import  cookie from 'cookie';
 
 const router = express.Router();
 
