@@ -11,12 +11,12 @@ interface CatalogTabProps {
 
 export default function CatalogTab({ onSelect }: CatalogTabProps) {
   const { images, isLoading, hasMore, loadMore } = useCatalogImages();
-  const { setItemImage } = useToolStore(); // ✅ update only itemImage
+  const { setItemImage } = useToolStore();
 
   const handleSelect = (img: string) => {
     setItemImage(img);
     toast.success('Tattoo image selected!');
-    onSelect?.();
+    onSelect?.(); // Close sidebar if passed
   };
 
   return (

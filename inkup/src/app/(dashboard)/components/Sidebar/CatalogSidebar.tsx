@@ -24,7 +24,8 @@ export default function CatalogSidebar({
   const [isOpen, setIsOpen] = useState(false);
 
   const renderTabContent = () => {
-    if (activeTab.key === 'catalog') return <CatalogTab />;
+    if (activeTab.key === 'catalog')
+      return <CatalogTab onSelect={isMobileSidebarOpen ? onClose : undefined} />;
     if (activeTab.key === 'generated') return <GeneratedTab />;
   };
 
@@ -70,7 +71,7 @@ export default function CatalogSidebar({
                   key={tab.key}
                   onClick={() => {
                     setActiveTab(tab);
-                    setIsOpen(false); // Close dropdown only
+                    setIsOpen(false);
                   }}
                   className={`cursor-pointer px-4 py-2 hover:bg-[#1A1A1A] ${
                     activeTab.key === tab.key
@@ -86,7 +87,7 @@ export default function CatalogSidebar({
         </div>
       </div>
 
-  
+      {/* Tab Content */}
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         {renderTabContent()}
       </div>

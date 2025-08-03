@@ -97,18 +97,16 @@ export default function DashboardPage() {
               onClick={() => setSidebarOpenMobile(true)}
               className="flex items-center gap-2 text-sm bg-[#1a1a1a] px-3 py-1 rounded"
             >
-              <Menu size={16} />
-              Catalog
+              <Menu size={25} />
             </button>
-            <Image src="/logoinkara.png" alt="Logo" width={32} height={32} />
           </div>
 
           {/* Main Canvas Area */}
           <main className="flex-1 overflow-y-auto px-4 py-6 flex flex-col items-center gap-6">
-            {!userImage || !itemImage ? (
+            {!userImage? (
               <div className="text-center mt-10">
                 <Image src="/logoinkara.png" alt="Logo" width={100} height={164} className="mx-auto mb-3" />
-                <h1 className="text-3xl font-bold">INAKARA AI GENERATE</h1>
+                <h1 className="text-3xl font-bold">INKARA AI GENERATE</h1>
                 <p className="text-sm text-gray-400">
                   Draw, edit, erase — just <span className="text-white font-medium">clip and create</span>
                 </p>

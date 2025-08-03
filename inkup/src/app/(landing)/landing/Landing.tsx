@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { FaMailBulk,FaLinkedin,FaInstagram } from "react-icons/fa";
+import { FaMailBulk, FaLinkedin, FaInstagram } from "react-icons/fa";
 
 const images = [
   { src: "/left.png", alt: "Left Tattoo" },
@@ -28,36 +28,33 @@ export default function HomePage({ onOpenModal }: HomePageProps) {
     return () => clearInterval(interval);
   }, []);
 
-useEffect(() => {
-  const target = triggerRef.current;
-  if (!target) return;
+  useEffect(() => {
+    const target = triggerRef.current;
+    if (!target) return;
 
-  const observer = new IntersectionObserver(
-    ([entry]) => setShowFooter(entry.isIntersecting),
-    { threshold: 0.3 }
-  );
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowFooter(entry.isIntersecting),
+      { threshold: 0.3 }
+    );
 
-  observer.observe(target);
-
-  return () => {
-    observer.unobserve(target);
-  };
-}, []);
+    observer.observe(target);
+    return () => observer.unobserve(target);
+  }, []);
 
   const scrollToFooter = () => {
-    footerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    footerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
     <main className="relative w-full min-h-screen bg-black text-white overflow-hidden flex flex-col items-center justify-start">
       <div className="w-full max-w-[1440px] flex flex-col items-center">
-        {/* ========== Mobile View ========== */}
-        <div className="w-full px-6 pt-6 lg:hidden flex flex-col items-center">
+
+        <div className="w-full px-6 pt-6 lg:hidden flex flex-col">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="mb-4"
+            className="mb-4 self-start"
           >
             <Image src="/logoinkara.png" alt="Logo" width={90} height={10} />
           </motion.div>
@@ -66,14 +63,18 @@ useEffect(() => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.7 }}
-            className="text-center mb-6"
+            className="mb-6"
           >
-            <h1 className="text-[36px] font-semibold leading-tight">
-              Try before you imagine
-            </h1>
-            <p className="text-sm text-gray-400 mt-2">
-              Virtual AI tryons for body arts for brands
-            </p>
+            <div className="text-left">
+  <h1 className="text-[24px] xs:text-[26px] sm:text-[30px] font-semibold leading-snug break-words">
+    Try before you imagine<br />
+    <span className="text-[22px] sm:text-[24px] font-medium">your body art</span>
+  </h1>
+  <p className="text-sm text-gray-400 mt-2">
+    Virtual AI tryons for body arts for brands
+  </p>
+</div>
+
           </motion.div>
 
           <motion.div
@@ -225,9 +226,9 @@ useEffect(() => {
         </div>
 
         {/* Trigger div for observer */}
-     <div ref={triggerRef} className="w-full h-0" />
+        <div ref={triggerRef} className="w-full h-0" />
 
-         {/* Footer */}
+        {/* Footer */}
         <motion.footer
           ref={footerRef}
           initial={{ opacity: 0, y: 50 }}
@@ -247,15 +248,18 @@ useEffect(() => {
               <h2 className="text-[#d0fe17] text-xl font-semibold mb-2">Contact Us</h2>
               <ul className="text-sm text-gray-300 space-y-3">
                 <li className="flex items-center gap-2">
-                  <FaMailBulk/>
-                  <a href="mailto:contact@inkaraai.com" className="hover:underline">
+                  <FaMailBulk />
+                  <a
+                    href="mailto:contact@inkaraai.com"
+                    className="hover:underline"
+                  >
                     contact@inkaraai.com
                   </a>
                 </li>
                 <li className="flex items-center gap-2">
-                 <FaInstagram/>
+                  <FaInstagram />
                   <a
-                    href="https://instagram.com/inkaraai"
+                    href="https://www.instagram.com/inkaraai2025?igsh=NGZ4OG4yd3V4MzFr"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:underline"
@@ -264,9 +268,9 @@ useEffect(() => {
                   </a>
                 </li>
                 <li className="flex items-center gap-2">
-                  <FaLinkedin/>
+                  <FaLinkedin />
                   <a
-                    href="https://linkedin.com/company/inkaraai"
+                    href=""
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:underline"
