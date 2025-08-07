@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { useToolStore } from '../../lib/store';
 import { Plus, Minus, Trash2 } from 'lucide-react';
@@ -31,6 +31,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   const { clearCanvas } = useCanvasExport(canvasRef);
 
   const [imageLoaded, setImageLoaded] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleClearAll = () => {
     clearCanvas();
@@ -39,12 +40,38 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
 
   const baseImage = resultImage || userImage;
 
-  // Reset loader flag when image source changes
+  // Reset loader flag and start timeout when new image is set
   useEffect(() => {
     if (baseImage) {
-      setImageLoaded(false); // reset on new image
+      setImageLoaded(false);
+      // Fallback timeout to hide loader after 60s
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        toast.dismiss();
+        toast.error('Image load timeout. Please try again.');
+        setIsGenerating(false);
+        setImageLoaded(true);
+      }, 60000); // 60 seconds
     }
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, [baseImage]);
+
+  const handleImageLoad = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setImageLoaded(true);
+    setIsGenerating(false);
+    toast.dismiss();
+  };
+
+  const handleImageError = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsGenerating(false);
+    toast.dismiss();
+    toast.error('Image failed to load.');
+  };
 
   return (
     <div
@@ -82,16 +109,8 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
           alt="Displayed Image"
           className="absolute z-10 object-contain w-full h-full transition-transform duration-300 fade-in"
           style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}
-          onLoad={() => {
-            setImageLoaded(true);
-            setIsGenerating(false);
-            toast.dismiss();
-          }}
-          onError={() => {
-            setIsGenerating(false);
-            toast.dismiss();
-            toast.error("Image failed to load.");
-          }}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
         />
       )}
 
@@ -111,10 +130,11 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
       {/* Mask overlay */}
       {mask && <MaskOverlay mask={mask} opacity={maskOpacity} />}
 
-      {/* Loader stays until actual <img /> renders */}
+      {/* Loader stays until image renders completely */}
       {(isGenerating || (baseImage && !imageLoaded)) && (
-        <div className="absolute inset-0 z-50 bg-black/50 flex items-center justify-center">
+        <div className="absolute inset-0 z-50 bg-black/50 flex flex-col items-center justify-center">
           <Loader />
+          <p className="text-sm text-white mt-3 animate-pulse">Generating Your Image…</p>
         </div>
       )}
     </div>

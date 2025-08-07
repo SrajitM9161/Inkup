@@ -1,6 +1,12 @@
 'use client';
 
-import { Download, Pencil, Eraser, Undo2, Redo2 } from 'lucide-react';
+import {
+  Download,
+  Pencil,
+  Eraser,
+  Undo2,
+  Redo2
+} from 'lucide-react';
 import { useToolStore } from '../../lib/store';
 import { ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -12,7 +18,13 @@ interface BottomToolbarTopProps {
 }
 
 export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
-  const { userImage, tool, setTool, strokeWidth, setStrokeWidth } = useToolStore();
+  const {
+    userImage,
+    tool,
+    setTool,
+    strokeWidth,
+    setStrokeWidth
+  } = useToolStore();
 
   useKeyboardShortcuts(canvasRef);
 
@@ -20,84 +32,88 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
     setStrokeWidth(Number(e.target.value));
   };
 
- const handleDownload = useCallback(async () => {
-  if (!canvasRef.current || !userImage) {
-    toast.error('Nothing to export');
-    return;
-  }
-
-  try {
-    const sketch = await canvasRef.current.exportImage('png');
-
-    const background = new Image();
-    const overlay = new Image();
-
-    // 🛡️ Prevent canvas tainting
-    background.crossOrigin = 'anonymous';
-    overlay.crossOrigin = 'anonymous';
-
-    // Assign sources
-    background.src = userImage;
-    overlay.src = sketch;
-
-    // Wait until both images are loaded
-    await Promise.all([
-      new Promise((res, rej) => {
-        background.onload = res;
-        background.onerror = rej;
-      }),
-      new Promise((res, rej) => {
-        overlay.onload = res;
-        overlay.onerror = rej;
-      }),
-    ]);
-
-    // Create and draw on canvas
-    const canvas = document.createElement('canvas');
-    canvas.width = background.width;
-    canvas.height = background.height;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      toast.error('Canvas context error');
+  const handleDownload = useCallback(async () => {
+    if (!canvasRef.current || !userImage) {
+      toast.error('Nothing to export');
       return;
     }
 
-    ctx.drawImage(background, 0, 0);
-    ctx.drawImage(overlay, 0, 0);
+    try {
+      const sketch = await canvasRef.current.exportImage('png');
 
-    // Export image
-    const finalImage = canvas.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = finalImage;
-    a.download = 'InkaraAI.png';
-    a.click();
+      const background = new Image();
+      const overlay = new Image();
 
-    toast.success('Downloaded!');
-  } catch (error) {
-    console.error('Download error:', error);
-    toast.error('Download failed (CORS issue or image load error)');
-  }
-}, [canvasRef, userImage]);
+      background.crossOrigin = 'anonymous';
+      overlay.crossOrigin = 'anonymous';
+
+      background.src = userImage;
+      overlay.src = sketch;
+
+      await Promise.all([
+        new Promise((res, rej) => {
+          background.onload = res;
+          background.onerror = rej;
+        }),
+        new Promise((res, rej) => {
+          overlay.onload = res;
+          overlay.onerror = rej;
+        })
+      ]);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = background.width;
+      canvas.height = background.height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        toast.error('Canvas context error');
+        return;
+      }
+
+      ctx.drawImage(background, 0, 0);
+      ctx.drawImage(overlay, 0, 0);
+
+      const finalImage = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = finalImage;
+      a.download = 'InkaraAI.png';
+      a.click();
+
+      toast.success('Downloaded!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Download failed (CORS issue or image load error)');
+    }
+  }, [canvasRef, userImage]);
 
   const undo = () => canvasRef.current?.undo?.();
   const redo = () => canvasRef.current?.redo?.();
 
+  const handleToolChange = (selectedTool: 'pen' | 'eraser') => {
+    setTool(selectedTool);
+    if (canvasRef.current) {
+      canvasRef.current.eraseMode(selectedTool === 'eraser');
+    }
+  };
+
   return (
-    <div className="
-      w-fit flex items-center justify-center 
-      gap-2 px-3.5 py-1.5 
-      bg-[#1C1C1C] 
-      border border-[#333] 
-      rounded-lg
-    ">
+    <div
+      className="
+        w-fit flex items-center justify-center 
+        gap-2 px-3.5 py-1.5 
+        bg-[#1C1C1C] 
+        border border-[#333] 
+        rounded-lg
+      "
+    >
       <Pencil
         size={26}
         className={`
           p-1 rounded-md cursor-pointer transition-colors 
           ${tool === 'pen' ? 'bg-[#D0FE17] text-black' : 'text-white/70'}
         `}
-        onClick={() => setTool('pen')}
+        onClick={() => handleToolChange('pen')}
       />
 
       <Eraser
@@ -106,11 +122,19 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
           p-1 rounded-md cursor-pointer transition-colors 
           ${tool === 'eraser' ? 'bg-[#D0FE17] text-black' : 'text-white/70'}
         `}
-        onClick={() => setTool('eraser')}
+        onClick={() => handleToolChange('eraser')}
       />
 
-      <Undo2 size={20} className="text-white/70 cursor-pointer" onClick={undo} />
-      <Redo2 size={20} className="text-white/70 cursor-pointer" onClick={redo} />
+      <Undo2
+        size={20}
+        className="text-white/70 cursor-pointer"
+        onClick={undo}
+      />
+      <Redo2
+        size={20}
+        className="text-white/70 cursor-pointer"
+        onClick={redo}
+      />
 
       <input
         type="range"
@@ -121,7 +145,11 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
         className="w-24 accent-[#D0FE17]"
       />
 
-      <Download size={20} className="text-white/70 cursor-pointer" onClick={handleDownload} />
+      <Download
+        size={20}
+        className="text-white/70 cursor-pointer"
+        onClick={handleDownload}
+      />
     </div>
   );
 }

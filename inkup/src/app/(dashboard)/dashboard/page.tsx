@@ -34,31 +34,39 @@ export default function DashboardPage() {
     setUserImage,
   } = useToolStore();
 
-  const handleGenerate = async () => {
-    if (!canvasRef.current || !userImage || !itemImage) {
-      toast.error('Upload both human and tattoo images first!');
-      return;
-    }
+ const handleGenerate = async () => {
+  if (!canvasRef.current || !userImage || !itemImage) {
+    toast.error('Upload both human and tattoo images first!');
+    return;
+  }
 
-    try {
-      const mask = await canvasRef.current.exportImage('png');
-      toast.loading('Generating...');
-      setIsGenerating(true);
+  try {
+    const mask = await canvasRef.current.exportImage('png');
+    toast.loading('Generating...');
+    setIsGenerating(true);
 
-      const generated = await generateTryonImage(userImage, itemImage, mask);
-
-      setUserImage(generated);
-      setResultImage('');
-      canvasRef.current.clearCanvas();
-      setTool('pen');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to generate');
-    } finally {
-      toast.dismiss();
+    // Timeout fail-safe
+    const timeoutId = setTimeout(() => {
       setIsGenerating(false);
-    }
-  };
+      toast.dismiss();
+      toast.error('Image generation timed out.');
+    }, 60000);
+
+    const generated = await generateTryonImage(userImage, itemImage, mask);
+    clearTimeout(timeoutId);
+
+    setUserImage(generated);
+    setResultImage('');
+    canvasRef.current.clearCanvas();
+    setTool('pen');
+  } catch (err) {
+    console.error(err);
+    toast.error('Failed to generate');
+  } finally {
+    toast.dismiss();
+  }
+};
+
 
   return (
     <ProtectedRoute>
