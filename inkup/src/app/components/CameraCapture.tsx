@@ -16,28 +16,27 @@ export default function CameraCapture({ onCapture, onCancel }: CameraCaptureProp
   const [canSwapCamera, setCanSwapCamera] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
 
-  // Detect if there are multiple video inputs
+  // Detect available cameras
   const detectAvailableCameras = async () => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoInputs = devices.filter((device) => device.kind === 'videoinput');
+      console.log('[CameraCapture] Video input devices:', videoInputs);
       setCanSwapCamera(videoInputs.length > 1);
     } catch (error) {
-      console.warn('[CameraCapture] Could not detect cameras', error);
+      console.warn('[CameraCapture] Camera detection failed:', error);
       setCanSwapCamera(false);
     }
   };
 
-  // Start the camera with selected facing mode
+  // Start the camera
   const startCamera = async (mode: 'user' | 'environment') => {
     try {
       const constraints: MediaStreamConstraints = {
-        video: { facingMode: mode },
+        video: { facingMode: mode }
       };
-
       const newStream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      // Stop previous stream
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
@@ -49,12 +48,12 @@ export default function CameraCapture({ onCapture, onCancel }: CameraCaptureProp
 
       setStream(newStream);
     } catch (err) {
-      console.warn(`[CameraCapture] Failed to access camera with mode '${mode}', falling back...`, err);
+      console.warn(`[CameraCapture] Failed to access ${mode} camera:`, err);
 
       if (mode === 'environment') {
         try {
           const fallbackStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user' },
+            video: { facingMode: 'user' }
           });
 
           if (videoRef.current) {
@@ -67,9 +66,7 @@ export default function CameraCapture({ onCapture, onCancel }: CameraCaptureProp
           setFacingMode('user');
           setStream(fallbackStream);
 
-          toast('Environment camera not found. Using front camera instead.', {
-            icon: '📷',
-          });
+          toast('Environment camera not found. Using front camera instead.', { icon: '📷' });
         } catch (fallbackError) {
           console.error('[CameraCapture] Fallback failed:', fallbackError);
           toast.error('Unable to access camera');
@@ -82,14 +79,12 @@ export default function CameraCapture({ onCapture, onCancel }: CameraCaptureProp
     }
   };
 
-  // Load camera when facing mode changes
   useEffect(() => {
     detectAvailableCameras();
 
-    // Add delay to avoid camera re-init glitches
     const delay = setTimeout(() => {
       startCamera(facingMode);
-    }, 200); // Adjust this delay if needed
+    }, 200);
 
     return () => {
       clearTimeout(delay);
@@ -97,21 +92,18 @@ export default function CameraCapture({ onCapture, onCancel }: CameraCaptureProp
     };
   }, [facingMode]);
 
-  // Debounced camera swap
   const swapCamera = () => {
     if (isSwapping) return;
     setIsSwapping(true);
 
-    // Stop current stream before switching
     stream?.getTracks().forEach((track) => track.stop());
 
     setTimeout(() => {
       setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
       setIsSwapping(false);
-    }, 300); // Small delay ensures smoother transition
+    }, 300);
   };
 
-  // Capture photo
   const capture = () => {
     const video = videoRef.current;
     if (!video) return;
@@ -137,7 +129,13 @@ export default function CameraCapture({ onCapture, onCancel }: CameraCaptureProp
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
       <div className="relative bg-[#1e1e1e] p-6 rounded-2xl shadow-xl w-full max-w-lg">
-        <video ref={videoRef} className="w-full h-auto rounded-xl" autoPlay muted playsInline />
+        <video
+          ref={videoRef}
+          className="w-full h-auto rounded-xl"
+          autoPlay
+          muted
+          playsInline
+        />
 
         <div className="flex justify-between mt-6">
           <button
@@ -154,7 +152,11 @@ export default function CameraCapture({ onCapture, onCancel }: CameraCaptureProp
           </button>
         </div>
 
-        {canSwapCamera && <SwapCameraButton onClick={swapCamera} />}
+        {canSwapCamera ? (
+          <SwapCameraButton onClick={swapCamera} />
+        ) : (
+          <p className="text-center text-gray-400 text-sm mt-2">Only one camera detected</p>
+        )}
       </div>
     </div>
   );
