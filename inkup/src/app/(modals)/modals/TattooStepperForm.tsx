@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -18,7 +17,7 @@ const formSchema = z.object({
   email: z.string().email('Enter valid email'),
   password: z.string().min(8, 'Password must be 8+ chars'),
   phoneNumber: z.string().min(10, 'Phone must be 10+ digits'),
-  address: z.string().min(2, 'Address required'),
+  address: z.string().min(15, 'Address required'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -51,12 +50,16 @@ export default function SignupStepperForm({ onSubmit }: Props) {
     formState: { errors },
   } = methods;
 
-  // ✅ Show toast when an error is detected
+  // ✅ Show toast for individual errors
   useEffect(() => {
-    const firstError = Object.values(errors)[0];
-    if (firstError?.message) {
-      toast.error(firstError.message.toString());
-    }
+    Object.entries(errors).forEach(([field, error]) => {
+      if (error?.message) {
+        const formattedField = field
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, str => str.toUpperCase());
+        toast.error(`${formattedField}: ${error.message}`);
+      }
+    });
   }, [errors]);
 
   const handleFinalSubmit = async (data: FormData) => {
@@ -132,8 +135,8 @@ export default function SignupStepperForm({ onSubmit }: Props) {
       fields: ['businessName', 'fullName'] as (keyof FormData)[],
       content: (
         <>
-          <FormGroup label="Business Name" name="businessName" placeholder="e.g. Inkify Studio" />
-          <FormGroup label="Full Name" name="fullName" placeholder="e.g. Jane Doe" />
+          <FormGroup label="Business Name" name="businessName" placeholder="Enter Your Business Name" />
+          <FormGroup label="Full Name" name="fullName" placeholder="Enter Your Full Name" />
         </>
       ),
     },
@@ -142,8 +145,8 @@ export default function SignupStepperForm({ onSubmit }: Props) {
       fields: ['email', 'password'] as (keyof FormData)[],
       content: (
         <>
-          <FormGroup label="Email" name="email" type="email" placeholder="e.g. jane@example.com" />
-          <FormGroup label="Password" name="password" type="password" placeholder="Create a strong password" />
+          <FormGroup label="Email" name="email" type="email" placeholder="Enter Your Email" />
+          <FormGroup label="Password" name="password" type="password" placeholder="Enter Your Password" />
         </>
       ),
     },
@@ -152,8 +155,8 @@ export default function SignupStepperForm({ onSubmit }: Props) {
       fields: ['phoneNumber', 'address'] as (keyof FormData)[],
       content: (
         <>
-          <FormGroup label="Phone Number" name="phoneNumber" placeholder="e.g. 9876543210" />
-          <FormGroup label="Address" name="address" placeholder="e.g. 123 Main Street, Delhi" />
+          <FormGroup label="Phone Number" name="phoneNumber" placeholder="Enter Your Phone Number" />
+          <FormGroup label="Address" name="address" placeholder="Enter Your Address" />
         </>
       ),
     },
@@ -161,10 +164,7 @@ export default function SignupStepperForm({ onSubmit }: Props) {
 
   const handleNext = async () => {
     const valid = await trigger(steps[step].fields);
-    if (!valid) {
-      toast.error('Please fix the errors before proceeding.');
-      return;
-    }
+    if (!valid) return; // Specific toasts already handled
     setStep((prev) => prev + 1);
   };
 

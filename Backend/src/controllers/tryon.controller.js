@@ -31,20 +31,36 @@ export const generateTryon = asyncHandler(async (req, res) => {
   const tryon_seed = Math.floor(Math.random() * 100000);
   const outputName = crypto.randomUUID();
 
-  const humanPath = await ensurePng(humanImage[0].path, path.join(tempDir, `human-${timestamp}.png`));
-  const tattooPath = await ensurePng(tattooImage[0].path, path.join(tempDir, `tattoo-${timestamp}.png`));
+  const humanPath = await ensurePng(
+    humanImage[0].path,
+    path.join(tempDir, `human-${timestamp}.png`)
+  );
+
+  const tattooPath = await ensurePng(
+    tattooImage[0].path,
+    path.join(tempDir, `tattoo-${timestamp}.png`)
+  );
+
   const maskPngPath = path.join(tempDir, `mask-${timestamp}.png`);
   const binaryMaskPath = path.join(tempDir, `mask-binary-${timestamp}.png`);
 
   await ensurePng(maskImage[0].path, maskPngPath);
   await binarizeMask(maskPngPath, binaryMaskPath);
 
+  // ✅ Get human image size *before* resizing mask
   const { width, height } = await sharp(humanPath).metadata();
+  if (!width || !height) {
+    throw new ApiErrorHandler(500, "Failed to read dimensions from human image.");
+  }
 
+  const resizedMaskPath = path.join(tempDir, `mask-resized-${timestamp}.png`);
+  await sharp(binaryMaskPath).resize(width, height).toFile(resizedMaskPath);
+
+  // ✅ Upload to Cloudinary
   const [humanUrl, tattooUrl, maskUrl] = await Promise.all([
     uploadImageToCloudinary(humanPath),
     uploadImageToCloudinary(tattooPath),
-    uploadImageToCloudinary(binaryMaskPath),
+    uploadImageToCloudinary(resizedMaskPath),
   ]);
 
   const generation = await prisma.generation.create({
@@ -128,7 +144,14 @@ export const generateTryon = asyncHandler(async (req, res) => {
     console.error("[ERROR] Tryon Generation Failure:", err);
     throw new ApiErrorHandler(500, "Tryon generation failed");
   } finally {
-    const cleanup = [humanPath, tattooPath, maskPngPath, binaryMaskPath];
+    // 🧹 Clean up temp files
+    const cleanup = [
+      humanPath,
+      tattooPath,
+      maskPngPath,
+      binaryMaskPath,
+      resizedMaskPath,
+    ];
     await Promise.all(cleanup.map((f) => fs.unlink(f).catch(() => null)));
   }
 });

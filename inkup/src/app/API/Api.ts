@@ -90,7 +90,7 @@ export const generateTryonImage = async (
   const generationId = res.data?.data?.generationId;
   if (!generationId) throw new Error('Generation failed, no ID returned');
 
-  // ✅ Fetch image from DB using generationId
+
   const imageRes = await api.get(`/api/tryon/image/${generationId}`, {
     withCredentials: true,
   });

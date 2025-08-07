@@ -5,7 +5,7 @@ import Modal from '../../ui/Modal';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useToolStore } from '../../../lib/store';
-import { uploadItemImage } from '../../../../API/Api';
+// import { uploadItemImage } from '../../../../API/Api';
 import { ImagePlus } from 'lucide-react';
 
 interface ItemUploadModalProps {
@@ -36,8 +36,8 @@ export default function ItemUploadModal({ isOpen, onClose }: ItemUploadModalProp
       onClose();
 
       try {
-        const result = await uploadItemImage(itemFile);
-        console.log('[DEBUG] Uploaded to server:', result);
+        // const result = await uploadItemImage(itemFile);
+        // console.log('[DEBUG] Uploaded to server:', result);
         toast.success('Item image also saved to server!');
       } catch (apiErr) {
         console.error('[DEBUG] Item Upload API Error:', apiErr);

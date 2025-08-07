@@ -62,7 +62,6 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      {/* This fixes the useSearchParams error */}
       <Suspense fallback={null}>
         <TokenHandler />
       </Suspense>

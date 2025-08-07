@@ -8,6 +8,7 @@ import { useCanvasZoom } from './useCanvasZoom';
 import { useCanvasExport } from './useCanvasExport';
 import MaskOverlay from './MaskOverlay';
 import Loader from '../ui/CrazyLoader';
+import toast from 'react-hot-toast';
 
 interface UserCanvasProps {
   canvasRef: React.RefObject<ReactSketchCanvasRef | null>;
@@ -23,34 +24,27 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
     clearPersistedImages,
     resultImage,
     isGenerating,
+    setIsGenerating,
   } = useToolStore();
 
   const { scale, zoomIn, zoomOut, handleWheelZoom } = useCanvasZoom();
   const { clearCanvas } = useCanvasExport(canvasRef);
 
-  const [loadedImage, setLoadedImage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (resultImage) {
-      const img = new Image();
-      img.src = resultImage;
-      img.onload = () => setLoadedImage(resultImage);
-    } else {
-      setLoadedImage(null);
-    }
-  }, [resultImage]);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    canvasRef.current.eraseMode(tool === 'eraser');
-  }, [tool, canvasRef]);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const handleClearAll = () => {
     clearCanvas();
     clearPersistedImages();
   };
 
-  const baseImage = loadedImage || userImage;
+  const baseImage = resultImage || userImage;
+
+  // Reset loader flag when image source changes
+  useEffect(() => {
+    if (baseImage) {
+      setImageLoaded(false); // reset on new image
+    }
+  }, [baseImage]);
 
   return (
     <div
@@ -81,13 +75,23 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
       {/* Blur background */}
       {baseImage && <div className="absolute w-full h-full bg-white/10 blur-2xl z-0" />}
 
-      {/* Image (original or result) */}
+      {/* Main image render */}
       {baseImage && (
         <img
           src={baseImage}
           alt="Displayed Image"
           className="absolute z-10 object-contain w-full h-full transition-transform duration-300 fade-in"
           style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}
+          onLoad={() => {
+            setImageLoaded(true);
+            setIsGenerating(false);
+            toast.dismiss();
+          }}
+          onError={() => {
+            setIsGenerating(false);
+            toast.dismiss();
+            toast.error("Image failed to load.");
+          }}
         />
       )}
 
@@ -107,8 +111,8 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
       {/* Mask overlay */}
       {mask && <MaskOverlay mask={mask} opacity={maskOpacity} />}
 
-      {/* Loader while generating or image not yet ready */}
-      {(isGenerating || (resultImage && !loadedImage)) && (
+      {/* Loader stays until actual <img /> renders */}
+      {(isGenerating || (baseImage && !imageLoaded)) && (
         <div className="absolute inset-0 z-50 bg-black/50 flex items-center justify-center">
           <Loader />
         </div>
