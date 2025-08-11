@@ -6,7 +6,7 @@ import CatalogTab from './tab-content/CatalogTab';
 import GeneratedTab from './tab-content/GeneratedTab';
 
 const defaultTabs = [
-  { key: 'catalog', label: 'InkarraAI workspace' },
+  { key: 'catalog', label: 'InkaraAI workspace' },
   { key: 'generated', label: 'User Workspace' },
 ] as const;
 

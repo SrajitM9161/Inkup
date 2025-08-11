@@ -1,44 +1,58 @@
-import prisma from '../../prisma/prismaClient.js';
 
-export const checkProfileCompletion = async (req, res, next) => {
+import prisma from "../../prisma/prismaClient.js";
+
+export const checkGoogleProfileCompletion = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
+
     if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized: No user found in token' });
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: No user found in request"
+      });
     }
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
-        address: true,
-        phoneNumber: true,
-        businessName: true,
-        email: true,
         name: true,
-        emailVerified: true,
-      },
+        email: true,
+        businessName: true,
+        phoneNumber: true,
+        address: true
+      }
     });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
     }
 
-    const requiredFields = ['address', 'phoneNumber', 'businessName'];
-    const missingFields = requiredFields.filter(field => !user[field] || user[field].trim() === '');
-
+    const requiredFields = ["businessName", "phoneNumber", "address"];
+    const missingFields = requiredFields.filter(
+      field => !user[field] || String(user[field]).trim() === ""
+    );
     if (missingFields.length > 0) {
-      return res.status(400).json({
-        message: 'Please complete your profile to continue.',
+      return res.status(200).json({
+        success: false,
+        message: "Please complete your profile to continue.",
         missingFields,
         userId: user.id
       });
     }
-    req.fullUser = user;
 
+ 
+    req.fullUser = user;
     next();
+
   } catch (err) {
-    console.error('Profile Check Error:', err);
-    res.status(500).json({ message: 'Internal server error while checking profile' });
+    console.error("Google Profile Completion Check Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while checking Google profile completion"
+    });
   }
 };

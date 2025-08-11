@@ -53,13 +53,13 @@ export default function ItemUploadModal({ isOpen, onClose }: ItemUploadModalProp
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="mx-auto max-w-sm px-0 space-y-4 text-center">
-        <h2 className="text-xl font-semibold">Upload Item</h2>
-        <p className="text-sm text-gray-400">Upload an item image to place or design with.</p>
+        <h2 className="text-xl font-semibold">Upload Tattoo</h2>
+        <p className="text-sm text-gray-400">Upload a tattoo image to place or design with.</p>
 
         {itemFile && (
           <Image
             src={URL.createObjectURL(itemFile)}
-            alt="Selected item"
+            alt="Selected tattoo"
             width={300}
             height={300}
             className="mx-auto object-contain max-h-48 rounded"

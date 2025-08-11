@@ -29,6 +29,7 @@ interface Props {
 export default function SignupStepperForm({ onSubmit }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const methods = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -50,19 +51,27 @@ export default function SignupStepperForm({ onSubmit }: Props) {
     formState: { errors },
   } = methods;
 
-  // ✅ Show toast for individual errors
+  // Show only the FIRST error toast at a time
   useEffect(() => {
-    Object.entries(errors).forEach(([field, error]) => {
-      if (error?.message) {
-        const formattedField = field
-          .replace(/([A-Z])/g, ' $1')
-          .replace(/^./, str => str.toUpperCase());
-        toast.error(`${formattedField}: ${error.message}`);
-      }
-    });
+    const entries = Object.entries(errors);
+    if (entries.length === 0) return;
+
+    const firstError = entries.find(([_, error]) => error?.message);
+
+    if (!firstError) return;
+
+    const [field, error] = firstError;
+
+    const formattedField = field
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase());
+
+    toast.error(`${formattedField}: ${error.message}`);
   }, [errors]);
 
   const handleFinalSubmit = async (data: FormData) => {
+    setLoading(true);
+
     const payload = {
       businessName: data.businessName,
       name: data.fullName,
@@ -77,6 +86,7 @@ export default function SignupStepperForm({ onSubmit }: Props) {
 
       if (!res.success) {
         toast.error(res.message || 'Signup failed');
+        setLoading(false);
         return;
       }
 
@@ -97,10 +107,24 @@ export default function SignupStepperForm({ onSubmit }: Props) {
       if (err.response?.status === 409) {
         toast.error('Email already registered. Try logging in.');
         router.push('/');
+      } else if (err.response?.status === 400 && err.response?.data?.errors) {
+        // Handle backend validation errors
+        const backendErrors = err.response.data.errors;
+        const messages = Object.entries(backendErrors)
+          .map(([field, msgs]) => {
+            const formattedField = field
+              .replace(/([A-Z])/g, ' $1')
+              .replace(/^./, (str) => str.toUpperCase());
+            return `${formattedField}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`;
+          })
+          .join(' | ');
+        toast.error(messages);
       } else {
         console.error('Registration error:', err);
         toast.error('Registration failed. Please try again.');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -116,7 +140,11 @@ export default function SignupStepperForm({ onSubmit }: Props) {
     placeholder: string;
   }) => (
     <div className="mb-4">
-      <label htmlFor={name} className="block text-sm font-medium mb-1" style={{ color: '#f8f8f8' }}>
+      <label
+        htmlFor={name}
+        className="block text-sm font-medium mb-1"
+        style={{ color: '#f8f8f8' }}
+      >
         {label}*
       </label>
       <input
@@ -125,6 +153,7 @@ export default function SignupStepperForm({ onSubmit }: Props) {
         type={type}
         placeholder={placeholder}
         className="input w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        disabled={loading}
       />
     </div>
   );
@@ -135,7 +164,11 @@ export default function SignupStepperForm({ onSubmit }: Props) {
       fields: ['businessName', 'fullName'] as (keyof FormData)[],
       content: (
         <>
-          <FormGroup label="Business Name" name="businessName" placeholder="Enter Your Business Name" />
+          <FormGroup
+            label="Business Name"
+            name="businessName"
+            placeholder="Enter Your Business Name"
+          />
           <FormGroup label="Full Name" name="fullName" placeholder="Enter Your Full Name" />
         </>
       ),
@@ -146,7 +179,12 @@ export default function SignupStepperForm({ onSubmit }: Props) {
       content: (
         <>
           <FormGroup label="Email" name="email" type="email" placeholder="Enter Your Email" />
-          <FormGroup label="Password" name="password" type="password" placeholder="Enter Your Password" />
+          <FormGroup
+            label="Password"
+            name="password"
+            type="password"
+            placeholder="Enter Your Password"
+          />
         </>
       ),
     },
@@ -155,7 +193,11 @@ export default function SignupStepperForm({ onSubmit }: Props) {
       fields: ['phoneNumber', 'address'] as (keyof FormData)[],
       content: (
         <>
-          <FormGroup label="Phone Number" name="phoneNumber" placeholder="Enter Your Phone Number" />
+          <FormGroup
+            label="Phone Number"
+            name="phoneNumber"
+            placeholder="Enter Your Phone Number"
+          />
           <FormGroup label="Address" name="address" placeholder="Enter Your Address" />
         </>
       ),
@@ -163,19 +205,28 @@ export default function SignupStepperForm({ onSubmit }: Props) {
   ];
 
   const handleNext = async () => {
+    if (loading) return; // prevent multiple clicks while loading
     const valid = await trigger(steps[step].fields);
-    if (!valid) return; // Specific toasts already handled
+    if (!valid) return; // toasts handled in useEffect
     setStep((prev) => prev + 1);
   };
 
   const handleBack = () => {
+    if (loading) return;
     setStep((prev) => prev - 1);
   };
 
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleFinalSubmit)} className="w-full max-w-md mx-auto">
-        <Stepper steps={steps} step={step} setStep={setStep} onNext={handleNext} onBack={handleBack} />
+        <Stepper
+          steps={steps}
+          step={step}
+          setStep={setStep}
+          onNext={handleNext}
+          onBack={handleBack}
+          loading={loading}
+        />
       </form>
     </FormProvider>
   );

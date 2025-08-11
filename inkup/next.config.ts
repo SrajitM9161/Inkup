@@ -33,7 +33,6 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
-  // ⛔ Skip TypeScript type errors during production builds
   typescript: {
     ignoreBuildErrors: true,
   },

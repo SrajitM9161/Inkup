@@ -1,11 +1,16 @@
-import passport from 'passport';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import prisma from '../../prisma/prismaClient.js';
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import prisma from "../../prisma/prismaClient.js";
 
 passport.serializeUser((user, done) => done(null, user.id));
+
 passport.deserializeUser(async (id, done) => {
-  const user = await prisma.user.findUnique({ where: { id } });
-  done(null, user);
+  try {
+    const user = await prisma.user.findUnique({ where: { id } });
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
 });
 
 passport.use(
@@ -16,29 +21,53 @@ passport.use(
       callbackURL: `${process.env.SERVER_BASE_URL}/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
-      const email = profile.emails?.[0]?.value;
+      try {
+        const email = profile.emails?.[0]?.value;
 
-      let user = await prisma.user.findUnique({ where: { email } });
+        if (!email) {
+          return done(new Error("Google account has no email associated"), null);
+        }
 
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            name: profile.displayName,
-            email,
-            accounts: {
-              create: {
-                provider: 'google',
-                providerAccountId: profile.id,
-                access_token: accessToken,
-                refresh_token: refreshToken,
-                 type: 'oauth'
+        let user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+          user = await prisma.user.create({
+            data: {
+              name: profile.displayName || "",
+              email,
+              accounts: {
+                create: {
+                  provider: "google",
+                  providerAccountId: profile.id,
+                  access_token: accessToken,
+                  refresh_token: refreshToken,
+                  type: "oauth",
+                },
               },
             },
-          },
-        });
-      }
+          });
 
-      return done(null, user);
+          // Mark that profile completion is required for this new user
+          user.needsProfileCompletion = true;
+        } else {
+          // Existing user - check if profile completion is required
+          const requiredFields = ["businessName", "phoneNumber", "address"];
+          const missingFields = requiredFields.filter(
+            (field) => !user[field] || String(user[field]).trim() === ""
+          );
+          if (missingFields.length > 0) {
+            user.needsProfileCompletion = true;
+            user.missingFields = missingFields;
+          } else {
+            user.needsProfileCompletion = false;
+          }
+        }
+
+        return done(null, user);
+      } catch (err) {
+        console.error("Google Auth Error:", err);
+        return done(err, null);
+      }
     }
   )
 );

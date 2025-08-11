@@ -13,9 +13,16 @@ interface StepperProps {
   setStep: React.Dispatch<React.SetStateAction<number>>;
   onNext: () => void;
   onBack: () => void;
+  loading?: boolean;
 }
 
-export default function Stepper({ steps, step, onNext, onBack }: StepperProps) {
+export default function Stepper({
+  steps,
+  step,
+  onNext,
+  onBack,
+  loading = false,
+}: StepperProps) {
   const current = steps[step] ?? steps[steps.length - 1];
 
   return (
@@ -49,6 +56,7 @@ export default function Stepper({ steps, step, onNext, onBack }: StepperProps) {
             type="button"
             onClick={onBack}
             className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-xl"
+            disabled={loading}
           >
             Back
           </button>
@@ -59,9 +67,40 @@ export default function Stepper({ steps, step, onNext, onBack }: StepperProps) {
         <button
           type={step === steps.length - 1 ? 'submit' : 'button'}
           onClick={step === steps.length - 1 ? undefined : onNext}
-          className="bg-[#D0FE17] hover:bg-[#CCFF01] text-black font-semibold px-6 py-2 rounded-xl"
+          className={`bg-[#D0FE17] hover:bg-[#CCFF01] text-black font-semibold px-6 py-2 rounded-xl ${
+            loading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          disabled={loading}
         >
-          {step === steps.length - 1 ? 'Submit' : 'Continue'}
+          {loading ? (
+            <span className="flex items-center space-x-2">
+              <svg
+                className="animate-spin h-5 w-5 text-black"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                ></path>
+              </svg>
+              <span>Submitting...</span>
+            </span>
+          ) : step === steps.length - 1 ? (
+            'Submit'
+          ) : (
+            'Continue'
+          )}
         </button>
       </div>
     </div>

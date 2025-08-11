@@ -12,6 +12,7 @@
     "@auth/core": "^0.40.0",
     "@headlessui/react": "^2.2.4",
     "@hookform/resolvers": "^5.1.1",
+    "@sentry/nextjs": "^10.3.0",
     "axios": "^1.10.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

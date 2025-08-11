@@ -72,7 +72,7 @@ export default function HomePage({ onOpenModal }: HomePageProps) {
                 <span className="text-[20px] md:text-[24px] font-medium">your body art</span>
               </h1>
               <p className="text-sm text-gray-400 mt-2">
-                Virtual AI tryons for body arts for brands
+                Virtual AI tryons of body arts for brands
               </p>
             </div>
           </motion.div>
@@ -234,7 +234,7 @@ export default function HomePage({ onOpenModal }: HomePageProps) {
                 <li className="flex items-center gap-2">
                   <FaInstagram />
                   <a
-                    href="https://www.instagram.com/inkaraai2025?igsh=NGZ4OG4yd3V4MzFr"
+                    href="https://www.instagram.com/inkauraai?utm_source=qr&igsh=NGZ4OG4yd3V4MzFr"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:underline"

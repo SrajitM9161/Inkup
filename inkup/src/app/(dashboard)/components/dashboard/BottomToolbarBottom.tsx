@@ -30,7 +30,7 @@ export default function BottomToolbarBottom({
           onClick={onUploadItemClick}
           className="flex items-center gap-1.5 px-3 py-1.5 border border-[#555] text-[#ccc] text-sm rounded-lg hover:bg-[#D0FE17] hover:text-black hover:font-medium transition"
         >
-          <ImagePlus size={14} /> Upload Item
+          <ImagePlus size={14} /> Upload Tattoo
         </button>
       </div>
 
