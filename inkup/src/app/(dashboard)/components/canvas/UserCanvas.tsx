@@ -51,7 +51,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
         toast.error('Image load timeout. Please try again.');
         setIsGenerating(false);
         setImageLoaded(true);
-      }, 60000); // 60 seconds
+      }, 120000); // 120 seconds
     }
 
     return () => {

@@ -38,7 +38,7 @@ export default function CatalogSidebar({
     >
       {/* Mobile close button */}
       {onClose && (
-        <div className="flex justify-end p-3 lg:hidden">
+        <div className="flex justify-end m-2.5 p-3 lg:hidden">
           <button
             onClick={onClose}
             className="text-white hover:text-[#D0FE17] transition text-xl"

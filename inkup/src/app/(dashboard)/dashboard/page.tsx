@@ -50,7 +50,7 @@ export default function DashboardPage() {
       setIsGenerating(false);
       toast.dismiss();
       toast.error('Image generation timed out.');
-    }, 60000);
+    }, 120000);
 
     const generated = await generateTryonImage(userImage, itemImage, mask);
     clearTimeout(timeoutId);
@@ -82,17 +82,16 @@ export default function DashboardPage() {
 
         {/* Mobile Sidebar */}
         {sidebarOpenMobile && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex justify-end">
-            <div className="w-[320px] bg-[#0D0D0D] h-full">
-              <CatalogSidebar
-                onClose={() => setSidebarOpenMobile(false)}
-                isMobileSidebarOpen={sidebarOpenMobile}
-              />
-            </div>
-            <div className="flex-1" onClick={() => setSidebarOpenMobile(false)} />
-          </div>
-        )}
-
+  <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex justify-end">
+    <div className="w-[320px] bg-[#0D0D0D] h-full relative z-[10000]">
+      <CatalogSidebar
+        onClose={() => setSidebarOpenMobile(false)}
+        isMobileSidebarOpen={sidebarOpenMobile}
+      />
+    </div>
+    <div className="flex-1" onClick={() => setSidebarOpenMobile(false)} />
+  </div>
+)}
         {/* Main Content */}
         <div className="flex-1 h-full flex flex-col overflow-hidden relative">
           <UploadModal isOpen={uploadModalOpen} onClose={() => setUploadModalOpen(false)} />

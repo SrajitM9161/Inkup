@@ -41,7 +41,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../Hooks/useAuth.hook';
 import SignupModal from '../../(modals)/modals/SignupModal';
-
+import ComingSoon from './commingsoon';
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { authenticated, loading, allowedUser, refreshAuth } = useAuth();
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -81,13 +81,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (showAccessDenied) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen text-center text-white bg-gray-900 px-4">
-        <h1 className="text-4xl font-bold mb-4">Coming Soon!</h1>
-        <p className="mb-8 text-lg">
-          Coming soon! 
-          
-        </p>
-        {/* Optional: Add a logout button or link here */}
+      <div>
+        <ComingSoon />
       </div>
     );
   }

@@ -1,9 +1,8 @@
-"use client";
+'use client';
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FaMailBulk, FaLinkedin, FaInstagram } from "react-icons/fa";
 
 const images = [
   { src: "/left.png", alt: "Left Tattoo" },
@@ -13,13 +12,18 @@ const images = [
 
 type HomePageProps = {
   onOpenModal: () => void;
+  setShowFooter: (show: boolean) => void;
+  triggerRef: React.RefObject<HTMLDivElement | null>;
+  footerRef: React.RefObject<HTMLDivElement | null>;
 };
 
-export default function HomePage({ onOpenModal }: HomePageProps) {
+export default function HomePage({
+  onOpenModal,
+  setShowFooter,
+  triggerRef,
+  footerRef,
+}: HomePageProps) {
   const [current, setCurrent] = useState(0);
-  const [showFooter, setShowFooter] = useState(false);
-  const triggerRef = useRef<HTMLDivElement | null>(null);
-  const footerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -39,7 +43,7 @@ export default function HomePage({ onOpenModal }: HomePageProps) {
 
     observer.observe(target);
     return () => observer.unobserve(target);
-  }, []);
+  }, [triggerRef, setShowFooter]);
 
   const scrollToFooter = () => {
     footerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -68,8 +72,11 @@ export default function HomePage({ onOpenModal }: HomePageProps) {
           >
             <div className="text-left">
               <h1 className="text-[24px] md:text-[28px] font-semibold leading-snug">
-                Try before you imagine<br />
-                <span className="text-[20px] md:text-[24px] font-medium">your body art</span>
+                Try before you imagine
+                <br />
+                <span className="text-[20px] md:text-[24px] font-medium">
+                  your body art
+                </span>
               </h1>
               <p className="text-sm text-gray-400 mt-2">
                 Virtual AI tryons of body arts for brands
@@ -103,7 +110,13 @@ export default function HomePage({ onOpenModal }: HomePageProps) {
               className="border border-[#d0fe17] text-[#d0fe17] h-[40px] rounded-full font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition"
             >
               Contact us
-              <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                viewBox="0 0 20 20"
+                aria-hidden="true"
+              >
                 <path
                   d="M14.4977 6.79778C14.5241 6.5229 14.3226 6.2787 14.0477 6.25234L9.56827 5.8228C9.29339 5.79645 9.04919 5.99791 9.02283 6.2728C8.99647 6.54768 9.19794 6.79188 9.47282 6.81824L13.4546 7.20005L13.0727 11.1818C13.0464 11.4567 13.2479 11.7009 13.5227 11.7272C13.7976 11.7536 14.0418 11.5521 14.0682 11.2772L14.4977 6.79778Z"
                   fill="#D0FE17"
@@ -147,11 +160,13 @@ export default function HomePage({ onOpenModal }: HomePageProps) {
               transition={{ delay: 0.3, duration: 0.5 }}
             >
               <div className="px-1 mb-6 text-white text-center">
-                <h1 className="font-medium text-[48px] leading-[1.2]">Try before you imagine</h1>
+                <h1 className="font-medium text-[48px] leading-[1.2]">
+                  Try before you imagine
+                </h1>
                 <div className="flex flex-col md:flex-row justify-center items-center text-center gap-2 mt-2">
                   <span className="text-[28px]">your body art</span>
                   <span className="text-sm text-gray-400">
-                    Virtual AI tryons for body arts for brands
+                    Virtual AI tryons of body arts for brands
                   </span>
                 </div>
               </div>
@@ -203,60 +218,8 @@ export default function HomePage({ onOpenModal }: HomePageProps) {
           </div>
         </div>
 
-        {/* Scroll Observer Trigger */}
+
         <div ref={triggerRef} className="w-full h-0" />
-
-        {/* Footer */}
-        <motion.footer
-          ref={footerRef}
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: showFooter ? 1 : 0, y: showFooter ? 0 : 50 }}
-          transition={{ duration: 0.5 }}
-          className="w-full bg-black text-white px-4 py-6 border-t border-gray-800 mt-6"
-        >
-          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-start gap-6">
-            <div className="flex-1">
-              <h2 className="text-[#d0fe17] text-xl font-semibold mb-2">About</h2>
-              <p className="text-sm text-gray-300 max-w-md">
-                We create experiences which speak art in depth to make a perfect ink decision.
-              </p>
-            </div>
-
-            <div className="flex-1">
-              <h2 className="text-[#d0fe17] text-xl font-semibold mb-2">Contact Us</h2>
-              <ul className="text-sm text-gray-300 space-y-3">
-                <li className="flex items-center gap-2">
-                  <FaMailBulk />
-                  <a href="mailto:contact@inkaraai.com" className="hover:underline">
-                    contact@inkaraai.com
-                  </a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <FaInstagram />
-                  <a
-                    href="https://www.instagram.com/inkauraai?utm_source=qr&igsh=NGZ4OG4yd3V4MzFr"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline"
-                  >
-                    Instagram
-                  </a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <FaLinkedin />
-                  <a
-                    href=""
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline"
-                  >
-                    LinkedIn
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </motion.footer>
       </div>
     </main>
   );
