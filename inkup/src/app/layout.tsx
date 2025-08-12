@@ -22,7 +22,6 @@ export const metadata: Metadata = {
   },
 };
 
-// ✅ Add proper viewport for scaling
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
