@@ -126,8 +126,8 @@ export default function SignupStepperForm({ onSubmit }: Props) {
           required: `${label} is required`,
           ...(name === 'email' && {
             pattern: {
-              value: /^[^\s@]+@gmail\.com$/i,
-              message: 'Email must be a valid Gmail address',
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              message: 'Email must be valid',
             },
           }),
           ...(name === 'password' && {
@@ -137,12 +137,6 @@ export default function SignupStepperForm({ onSubmit }: Props) {
               hasLower: (v) => /[a-z]/.test(v) || 'Must contain lowercase letter',
               hasNumber: (v) => /\d/.test(v) || 'Must contain number',
               hasSpecial: (v) => /[@$!%*?&]/.test(v) || 'Must contain special character',
-            },
-          }),
-          ...(name === 'phoneNumber' && {
-            pattern: {
-              value: /^\d{10}$/,
-              message: 'Phone number must be exactly 10 digits',
             },
           }),
         })}

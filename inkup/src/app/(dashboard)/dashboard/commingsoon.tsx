@@ -54,7 +54,13 @@ export default function Home() {
         
         {/* Logo in top-left */}
         <div className="absolute top-4 left-4 font-medium text-[22px]">
-          <span className="text-[#d0fe17]">Ink</span>ara
+          <Image
+            src="/logoinkara.png"
+            alt="Inkara AI Logo"
+            width={100}
+            height={40}
+            className="object-contain"
+          />
         </div>
 
         {/* Heading: Launching (line 1), soon (line 2) */}
@@ -113,7 +119,13 @@ export default function Home() {
       {/* DESKTOP */}
       <div className="hidden md:block">
         <div className="absolute top-9 left-[66px] font-medium text-[27px]">
-          <span className="text-[#d0fe17]">Ink</span>ara
+           <Image
+            src="/logoinkara.png"
+            alt="Inkara AI Logo"
+            width={100}
+            height={40}
+            className="object-contain"
+          />
         </div>
 
         <div className="absolute top-[130px] left-[66px] max-w-[560px]">

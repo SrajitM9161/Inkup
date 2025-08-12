@@ -19,17 +19,17 @@ const socialLinks = [
     color: "#E1306C",
   },
   {
-    href: "https://linkedin.com/in/yourprofile",
+    href: "https://www.instagram.com/inkauraai",
     icon: FaLinkedin,
     color: "#0077B5",
   },
   {
-    href: "https://www.pinterest.com/yourprofile",
+    href: "https://pin.it/2x0rT28yF",
     icon: FaPinterest,
     color: "#BD081C",
   },
   {
-    href: "https://twitter.com/yourprofile",
+    href: "https://www.instagram.com/inkauraai",
     icon: FaTwitter,
     color: "#1DA1F2",
   },
