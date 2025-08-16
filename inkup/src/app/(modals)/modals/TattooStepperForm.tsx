@@ -6,7 +6,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
-import { registerUser, getMe } from '../../API/api';
+import { registerUser, getMe } from '../../api/api';
 import Stepper from '../../components/Stepper';
 
 type FormData = {

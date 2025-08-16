@@ -13,7 +13,7 @@ import UploadModal from '../components/dashboard/Modals/UploadModal';
 import ItemUploadModal from '../components/dashboard/Modals/Uploadtatoo';
 import CatalogSidebar from '../components/Sidebar/CatalogSidebar';
 import ProtectedRoute from './ProtectedRoute';
-import { generateTryonImage } from '../../API/api';
+import { generateTryonImage } from '../../api/api';
 import TokenHandler from '../../components/TokenHandler';
 
 export default function DashboardPage() {

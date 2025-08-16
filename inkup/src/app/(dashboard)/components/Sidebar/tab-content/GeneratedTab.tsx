@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useOutputStore } from '../../../lib/store';
-import api from '../../../../API/api';
+import api from '../../../../api/api';
 import ImageCard from '../ImageCard';
 
 interface OutputImage {
