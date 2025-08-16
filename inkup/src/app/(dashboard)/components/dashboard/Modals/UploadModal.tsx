@@ -5,7 +5,7 @@ import Modal from '../../ui/Modal';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useToolStore } from '../../../lib/store';
-import { uploadUserImage } from '../../../../API/Api';
+import { uploadUserImage } from '../../../../API/api';
 import CameraCapture from '../../../../components/CameraCapture';
 import { ImagePlus, Camera } from 'lucide-react';
 

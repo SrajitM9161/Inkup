@@ -55,7 +55,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getMe } from '../API/Api';
+import { getMe } from '../API/api';
 
 interface AuthContextType {
   authenticated: boolean;
