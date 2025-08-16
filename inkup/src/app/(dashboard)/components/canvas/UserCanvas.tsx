@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { useToolStore } from '../../lib/store';
-import { Plus, Minus, Trash2 } from 'lucide-react';
-import { useCanvasZoom } from './useCanvasZoom';
+import { Trash2 /*, Plus, Minus */ } from 'lucide-react';
+// import { useCanvasZoom } from './useCanvasZoom';
 import { useCanvasExport } from './useCanvasExport';
 import MaskOverlay from './MaskOverlay';
 import Loader from '../ui/CrazyLoader';
@@ -27,7 +27,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
     setIsGenerating,
   } = useToolStore();
 
-  const { scale, zoomIn, zoomOut, handleWheelZoom } = useCanvasZoom();
+  // const { scale, zoomIn, zoomOut, handleWheelZoom } = useCanvasZoom();
   const { clearCanvas } = useCanvasExport(canvasRef);
 
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -40,18 +40,16 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
 
   const baseImage = resultImage || userImage;
 
-  // Reset loader flag and start timeout when new image is set
   useEffect(() => {
     if (baseImage) {
       setImageLoaded(false);
-      // Fallback timeout to hide loader after 60s
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
         toast.dismiss();
         toast.error('Image load timeout. Please try again.');
         setIsGenerating(false);
         setImageLoaded(true);
-      }, 120000); // 120 seconds
+      }, 1200000);
     }
 
     return () => {
@@ -75,7 +73,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
 
   return (
     <div
-      onWheel={handleWheelZoom}
+      // onWheel={handleWheelZoom}  // zoom disabled
       className="
         relative w-[280px] h-[420px]
         md:w-[360px] md:h-[540px]
@@ -88,49 +86,47 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
     >
       {/* Controls */}
       <div className="absolute top-2 right-2 z-30 flex flex-col gap-2">
+        {/*
         <button onClick={zoomIn} className="bg-[#222] text-white p-1 rounded hover:bg-[#333]">
           <Plus size={18} />
         </button>
         <button onClick={zoomOut} className="bg-[#222] text-white p-1 rounded hover:bg-[#333]">
           <Minus size={18} />
         </button>
+        */}
         <button onClick={handleClearAll} className="bg-[#222] text-white p-1 rounded hover:bg-[#333]">
           <Trash2 size={18} />
         </button>
       </div>
 
-      {/* Blur background */}
-      {baseImage && <div className="absolute w-full h-full bg-white/10 blur-2xl z-0" />}
+      {/* Main container (no zoom) */}
+      <div className="absolute inset-0">
+        {baseImage && <div className="absolute w-full h-full bg-white/10 blur-2xl z-0" />}
+        {baseImage && (
+          <img
+            src={baseImage}
+            alt="Displayed Image"
+            className="absolute w-full h-full object-contain z-10 fade-in"
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        )}
 
-      {/* Main image render */}
-      {baseImage && (
-        <img
-          src={baseImage}
-          alt="Displayed Image"
-          className="absolute z-10 object-contain w-full h-full transition-transform duration-300 fade-in"
-          style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
-      )}
+        {userImage && !resultImage && (
+          <ReactSketchCanvas
+            ref={canvasRef}
+            width="100%"
+            height="100%"
+            strokeWidth={strokeWidth}
+            strokeColor={tool === 'pen' ? '#ff3366' : '#ffffff'}
+            canvasColor="transparent"
+            style={{ position: 'absolute', top: 0, left: 0, zIndex: 20 }}
+          />
+        )}
 
-      {/* Drawing Canvas */}
-      {userImage && !resultImage && (
-        <ReactSketchCanvas
-          ref={canvasRef}
-          width="100%"
-          height="100%"
-          strokeWidth={strokeWidth}
-          strokeColor={tool === 'pen' ? '#ff3366' : '#ffffff'}
-          canvasColor="transparent"
-          style={{ position: 'absolute', top: 0, left: 0, zIndex: 20, pointerEvents: 'auto' }}
-        />
-      )}
+        {mask && <MaskOverlay mask={mask} opacity={maskOpacity} />}
+      </div>
 
-      {/* Mask overlay */}
-      {mask && <MaskOverlay mask={mask} opacity={maskOpacity} />}
-
-      {/* Loader stays until image renders completely */}
       {(isGenerating || (baseImage && !imageLoaded)) && (
         <div className="absolute inset-0 z-50 bg-black/50 flex flex-col items-center justify-center">
           <Loader />

@@ -1,7 +1,6 @@
-import path from "path";
 import fs from "fs/promises";
+import path from "path";
 import crypto from "crypto";
-import sharp from "sharp";
 import WebSocket from "ws";
 import axios from "axios";
 import prisma from "../../prisma/prismaClient.js";
@@ -12,56 +11,42 @@ import ApiResponseHandler from "../utils/apiResponseHandler.js";
 import uploadImageToCloudinary from "../config/Cloudinary.config.js";
 import { buildComfyGraph } from "../ML/buildGraph.js";
 import { binarizeMask } from "../utils/binarizeMask.js";
-
-const ensurePng = async (inputPath, outputPath) => {
-  await sharp(inputPath).png().toFile(outputPath);
-  return outputPath;
-};
-
+import { cleanupFiles } from "../utils/cleanupFilesHandler.js";
+import sharp from "sharp";
 export const generateTryon = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-  const { humanImage, tattooImage, maskImage } = req.files;
+  const { humanImage, tattooImage, maskImage } = req.processedImages;
 
-  if (!humanImage || !tattooImage || !maskImage) {
-    throw new ApiErrorHandler(400, "All three images (human, tattoo, mask) are required.");
+  if (!humanImage?.length || !tattooImage?.length || !maskImage?.length) {
+    throw new ApiErrorHandler(
+      400,
+      "All three images (human, tattoo, mask) are required."
+    );
   }
 
-  const timestamp = Date.now();
+  const humanResized = humanImage[0];
+  const tattooResized = tattooImage[0];
+  const maskResized = maskImage[0];
+
   const tempDir = path.join(process.cwd(), "Public/temp");
   const tryon_seed = Math.floor(Math.random() * 100000);
   const outputName = crypto.randomUUID();
 
-  const humanPath = await ensurePng(
-    humanImage[0].path,
-    path.join(tempDir, `human-${timestamp}.png`)
-  );
 
-  const tattooPath = await ensurePng(
-    tattooImage[0].path,
-    path.join(tempDir, `tattoo-${timestamp}.png`)
-  );
+  const binaryMaskPath = path.join(tempDir, `mask-binary-${Date.now()}.png`);
+  await binarizeMask(maskResized.filePath, binaryMaskPath);
 
-  const maskPngPath = path.join(tempDir, `mask-${timestamp}.png`);
-  const binaryMaskPath = path.join(tempDir, `mask-binary-${timestamp}.png`);
+  const resizedMaskPath = path.join(tempDir, `mask-final-${Date.now()}.png`);
+  await sharp(binaryMaskPath)
+    .resize(humanResized.width, humanResized.height)
+    .toFile(resizedMaskPath);
 
-  await ensurePng(maskImage[0].path, maskPngPath);
-  await binarizeMask(maskPngPath, binaryMaskPath);
-
-  // ✅ Get human image size *before* resizing mask
-  const { width, height } = await sharp(humanPath).metadata();
-  if (!width || !height) {
-    throw new ApiErrorHandler(500, "Failed to read dimensions from human image.");
-  }
-
-  const resizedMaskPath = path.join(tempDir, `mask-resized-${timestamp}.png`);
-  await sharp(binaryMaskPath).resize(width, height).toFile(resizedMaskPath);
-
-  // ✅ Upload to Cloudinary
   const [humanUrl, tattooUrl, maskUrl] = await Promise.all([
-    uploadImageToCloudinary(humanPath),
-    uploadImageToCloudinary(tattooPath),
+    uploadImageToCloudinary(humanResized.filePath),
+    uploadImageToCloudinary(tattooResized.filePath),
     uploadImageToCloudinary(resizedMaskPath),
   ]);
+
 
   const generation = await prisma.generation.create({
     data: {
@@ -71,20 +56,26 @@ export const generateTryon = asyncHandler(async (req, res) => {
     },
   });
 
+
   const promptGraph = await buildComfyGraph({
     userImageUrl: humanUrl,
     itemImageUrl: tattooUrl,
     maskImageUrl: maskUrl,
-    width,
-    height,
+    width: humanResized.width,
+    height: humanResized.height,
     seed: tryon_seed,
     outputName,
   });
 
-  const ws = new WebSocket(`wss://${process.env.RUNPOD_SOCKET}ws?clientId=garment-tryon`);
+  const ws = new WebSocket(
+    `wss://${process.env.RUNPOD_SOCKET}ws?clientId=garment-tryon`
+  );
 
   const waitForCompletion = new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject("Timeout waiting for ML result"), 90000);
+    const timeout = setTimeout(
+      () => reject("Timeout waiting for ML result"),
+      300000
+    );
 
     ws.on("message", (data) => {
       const message = JSON.parse(data.toString());
@@ -105,7 +96,10 @@ export const generateTryon = asyncHandler(async (req, res) => {
     });
   });
 
+  const outputTempPath = path.join(tempDir, `${outputName}_00001_.png`);
+
   try {
+   
     await mlAPI.post("/prompt", {
       prompt: promptGraph.prompt,
       client_id: promptGraph.client_id,
@@ -113,6 +107,7 @@ export const generateTryon = asyncHandler(async (req, res) => {
     });
 
     await waitForCompletion;
+
 
     const filename = `${outputName}_00001_.png`;
     const imageUrl = `${process.env.RUNPOD}view?filename=${filename}&type=output`;
@@ -122,6 +117,7 @@ export const generateTryon = asyncHandler(async (req, res) => {
     await fs.writeFile(outputTempPath, data);
 
     const uploadedOutputUrl = await uploadImageToCloudinary(outputTempPath);
+
 
     await prisma.generationAsset.create({
       data: {
@@ -144,14 +140,15 @@ export const generateTryon = asyncHandler(async (req, res) => {
     console.error("[ERROR] Tryon Generation Failure:", err);
     throw new ApiErrorHandler(500, "Tryon generation failed");
   } finally {
-    // 🧹 Clean up temp files
+
     const cleanup = [
-      humanPath,
-      tattooPath,
-      maskPngPath,
+      humanResized.filePath,
+      tattooResized.filePath,
+      maskResized.filePath,
       binaryMaskPath,
       resizedMaskPath,
+      outputTempPath
     ];
-    await Promise.all(cleanup.map((f) => fs.unlink(f).catch(() => null)));
+    await cleanupFiles(cleanup);
   }
 });

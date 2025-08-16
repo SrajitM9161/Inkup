@@ -3,7 +3,6 @@ import asyncHandler from '../utils/asyncHandler.js';
 import ApiResponseHandler from '../utils/apiResponseHandler.js';
 import ApiErrorHandler from '../utils/apiErrorHandler.js';
 import prisma from '../../prisma/prismaClient.js';
-import { notifyUser } from '../utils/socketServer.js';
 
 export const uploadUserImage = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -13,13 +12,16 @@ export const uploadUserImage = asyncHandler(async (req, res) => {
 
   const url = await uploadImageToCloudinary(file.path);
 
-  const generation = await prisma.generation.create({
-    data: {
-      user: { connect: { id: userId } },
-      userImageUrl: url,
-      status: 'PENDING',
+ const generation = await prisma.generation.create({
+  data: {
+    user: {
+      connect: { id: userId },
+
     },
-  });
+    userImageUrl: url,
+    status: 'PENDING',
+  },
+});
 
   return new ApiResponseHandler(200, 'User image uploaded', { generationId: generation.id }).send(res);
 });
@@ -54,14 +56,6 @@ export const uploadItemImage = asyncHandler(async (req, res) => {
     });
   }
 
-  // ✅ Notify frontend over WebSocket that generation started
-  notifyUser(userId, {
-    type: 'generationStarted',
-    generationId: generation.id,
-    message: 'Both images uploaded. Generation started.',
-  });
-
-  // Here you could trigger your ML service to start generation
 
   return new ApiResponseHandler(200, 'Item image uploaded & generation started', {
     generationId: generation.id,

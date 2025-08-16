@@ -42,10 +42,8 @@ export default function DashboardPage() {
 
   try {
     const mask = await canvasRef.current.exportImage('png');
-    toast.loading('Generating...');
     setIsGenerating(true);
 
-    // Timeout fail-safe
     const timeoutId = setTimeout(() => {
       setIsGenerating(false);
       toast.dismiss();

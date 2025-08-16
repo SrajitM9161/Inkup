@@ -5,7 +5,7 @@ import Modal from '../../ui/Modal';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useToolStore } from '../../../lib/store';
-// import { uploadUserImage } from '../../../../API/Api';
+import { uploadUserImage } from '../../../../API/Api';
 import CameraCapture from '../../../../components/CameraCapture';
 import { ImagePlus, Camera } from 'lucide-react';
 
@@ -38,8 +38,8 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
       onClose();
 
       try {
-        // const result = await uploadUserImage(userFile);
-        // console.log('[Upload Success]', result);
+        const result = await uploadUserImage(userFile);
+        console.log('[Upload Success]', result);
         toast.success('Image saved to server!');
       } catch (err) {
         console.error('[Upload Error]', err);

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
@@ -28,51 +26,44 @@ export default function GeneratedOutputTab() {
   const fetchOutputImages = useCallback(async () => {
     if (!hasMore || loading) return;
 
-    try {
-      setLoading(true);
-      setError('');
+    setLoading(true);
+    setError('');
 
+    try {
       const response = await api.get(`api/user/outputs?page=${page}`);
       const newImages: OutputImage[] = response.data?.data?.outputImages || [];
 
       if (newImages.length === 0) {
-        setHasMore(false);
+        setHasMore(false); // stop fetching
       } else {
         appendOutputImages(newImages);
         setPage((prev) => prev + 1);
       }
-    } catch (err: unknown) {
-
-
-      if (
-        typeof err === 'object' &&
-        err !== null &&
-        'response' in err &&
-        typeof (err as any).response?.data?.message === 'string'
-      ) {
-        setError((err as any).response.data.message);
-      } else {
-        setError('Failed to fetch images');
-      }
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message || 'Failed to fetch images'
+      );
     } finally {
       setLoading(false);
     }
   }, [page, hasMore, loading, appendOutputImages]);
 
+  // Initial fetch
   useEffect(() => {
     fetchOutputImages();
-  }, [fetchOutputImages]);
+  }, []); // only once on mount
 
+  // Intersection Observer for infinite scroll
   useEffect(() => {
     if (!observerRef.current) return;
 
-    if (observerInstance.current) {
-      observerInstance.current.disconnect();
-    }
+    // Disconnect old observer
+    observerInstance.current?.disconnect();
 
     observerInstance.current = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasMore && !loading) {
           fetchOutputImages();
         }
       },
@@ -84,27 +75,20 @@ export default function GeneratedOutputTab() {
 
     observerInstance.current.observe(observerRef.current);
 
-    return () => {
-      if (observerInstance.current) {
-        observerInstance.current.disconnect();
-      }
-    };
+    return () => observerInstance.current?.disconnect();
   }, [fetchOutputImages, hasMore, loading]);
 
   return (
-    <div
-      ref={containerRef}
-      className="h-[calc(100vh-64px)] overflow-y-auto p-1"
-    >
+    <div ref={containerRef} className="h-[calc(100vh-64px)] overflow-y-auto p-1">
       {outputImages.length === 0 && !loading && !error && (
         <p className="text-sm text-gray-400 mt-2">No output images found.</p>
       )}
       {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
 
       <div className="grid grid-cols-2 gap-[6px]">
-        {outputImages.map((img, index) => (
+        {outputImages.map((img) => (
           <ImageCard
-            key={index}
+            key={img.assetId} // use unique assetId instead of index
             img={img.outputImageUrl}
             onClick={() => console.log('Clicked image:', img.outputImageUrl)}
           />
@@ -116,7 +100,7 @@ export default function GeneratedOutputTab() {
       {loading && (
         <p className="text-center text-sm text-gray-400 mt-2">Loading...</p>
       )}
-      {!hasMore && !loading && (
+      {!hasMore && !loading && outputImages.length > 0 && (
         <p className="text-center text-sm text-gray-500 mt-2">You’ve reached the end.</p>
       )}
     </div>
