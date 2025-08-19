@@ -250,18 +250,16 @@ export default function CameraCapture({
       } catch {}
 
       onCapture(file, base64);
-      toast.success('Photo captured!');
     }, 'image/png');
   }, [onCapture, preferredKind, usingDeviceId, availableVideoInputs, preferredWidth, preferredHeight]);
 
-  // When page is hidden (tab change), stop camera to save battery (optional)
   useEffect(() => {
     const handleVisibility = () => {
       if (document.hidden) {
-        // stop tracks but don't clear device list
+
         stopCurrentStream();
       } else {
-        // restart on visibility using last preferredKind
+
         startCamera(preferredKind, usingDeviceId ?? null).catch(() => {});
       }
     };

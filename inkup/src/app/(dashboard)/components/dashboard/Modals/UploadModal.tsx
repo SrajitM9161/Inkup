@@ -5,7 +5,6 @@ import Modal from '../../ui/Modal';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { useToolStore } from '../../../lib/store';
-import { uploadUserImage } from '../../../../api/api';
 import CameraCapture from '../../../../components/CameraCapture';
 import { ImagePlus, Camera } from 'lucide-react';
 
@@ -16,6 +15,7 @@ interface UploadModalProps {
 
 export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const [userFile, setUserFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -25,39 +25,25 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const setUploadModalOpen = useToolStore((s) => s.setUploadModalOpen);
 
   const handleUpload = async () => {
-    if (!userFile) return toast.error('Please select an image!');
+    if (!preview || !userFile) {
+      return toast.error('Please select or capture an image!');
+    }
     setIsUploading(true);
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64 = reader.result as string;
-      setUserImage(base64);
-      setUploadedFile(userFile);
-      setUploadModalOpen(false);
-      toast.success('Image uploaded locally!');
-      onClose();
+    setUserImage(preview);
+    setUploadedFile(userFile);
+    setUploadModalOpen(false);
+    toast.success('Image uploaded!');
+    onClose();
 
-      try {
-        const result = await uploadUserImage(userFile);
-        console.log('[Upload Success]', result);
-        toast.success('Image saved to server!');
-      } catch (err) {
-        console.error('[Upload Error]', err);
-        toast.error('Saved locally but failed to upload to server');
-      } finally {
-        setIsUploading(false);
-      }
-    };
-
-    reader.readAsDataURL(userFile);
+    setIsUploading(false);
   };
 
   const handleCameraCapture = (file: File, base64: string) => {
     setUserFile(file);
-    setUserImage(base64);
-    setUploadedFile(file);
+    setPreview(base64);
     setShowCamera(false);
-    toast.success('Photo captured!');
+    toast.success('Photo captured! Please confirm upload.');
   };
 
   return (
@@ -66,16 +52,16 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
         <div className="flex justify-center">
           <ImagePlus size={40} className="text-[#d0fe17]" />
         </div>
-        <h2 className="text-xl font-semibold">Image placement</h2>
+        <h2 className="text-xl font-semibold">Image Placement</h2>
         <p className="text-gray-400 text-sm">
-          Add image and visualize tattoo – just draw, erase, adjust and apply your touch.
+          Add image and visualize tattoo – draw, erase, adjust, apply your touch.
         </p>
 
         <div className="space-y-2">
-          {userFile && (
+          {preview && (
             <div className="w-full">
               <Image
-                src={URL.createObjectURL(userFile)}
+                src={preview}
                 alt="Preview"
                 width={300}
                 height={300}
@@ -85,6 +71,7 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
           )}
 
           <div className="flex justify-center gap-2">
+ 
             <button
               onClick={() => inputRef.current?.click()}
               className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1"
@@ -93,6 +80,7 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
               Upload Image
             </button>
 
+ 
             <button
               onClick={() => setShowCamera(true)}
               className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1"
@@ -111,20 +99,21 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
               const file = e.target.files?.[0];
               if (file) {
                 setUserFile(file);
+                setPreview(URL.createObjectURL(file));
               }
             }}
           />
         </div>
 
+
         <button
           onClick={handleUpload}
-          disabled={!userFile || isUploading}
+          disabled={!preview || isUploading}
           className="w-full mt-4 px-4 py-2 text-sm border border-[#D0FE17] text-[#D0FE17] rounded transition-all duration-200 hover:bg-[#D0FE17] hover:text-black hover:font-bold hover:border-transparent disabled:opacity-50"
         >
           {isUploading ? 'Uploading...' : 'Confirm & Upload'}
         </button>
       </div>
-
       {showCamera && (
         <CameraCapture
           onCapture={handleCameraCapture}
@@ -134,3 +123,4 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
     </Modal>
   );
 }
+

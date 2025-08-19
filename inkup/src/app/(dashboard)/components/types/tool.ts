@@ -1,4 +1,3 @@
-// types/tool.ts
 
 export type Tool = 'pen' | 'eraser';
 
