@@ -94,11 +94,12 @@ const handlePromptSubmit = async (prompt: string) => {
       });
     }
 
-    const res = await fetch("http://localhost:3001/api/images/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, image: imageToSend }),
-    });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/images/generate`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ prompt, image: imageToSend }),
+});
+
 
     const data = await res.json();
     if (res.ok && data.images?.length) {
