@@ -39,7 +39,7 @@ export default function BottomToolbarBottom({
         disabled={isGenerating || disableGenerate}
         className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2 bg-[#D0FE17] text-black text-base rounded-lg font-semibold hover:brightness-105 transition disabled:opacity-50"
       >
-        {isGenerating ? 'Generating...' : 'Generate'}
+        {isGenerating ? 'Generating...' : 'Tryon'}
       </button>
     </div>
   );

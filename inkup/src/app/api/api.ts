@@ -18,6 +18,14 @@ export const registerUser = async (data: {
   return response.data;
 };
 
+// export const completeProfile = async (data: any) => {
+//   const res = await axios.post(`/auth/complete-profile`, data, {
+//     withCredentials: true, // important for cookies!
+//   });
+//   return res.data;
+// };
+
+
 export const getMe = async () => {
   const res = await api.get('/me');
   return res.data;

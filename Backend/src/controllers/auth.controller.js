@@ -19,7 +19,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const { email, password, name, phoneNumber, businessName, address } = parsed.data;
 
-  // ✅ Check if email is already in use
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
     return res.status(409).json({

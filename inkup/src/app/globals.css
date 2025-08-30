@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  font-size: 16px;
+}
+
 @layer utilities {
   .bg-dot-pattern {
     background-color: #0D0D0D;

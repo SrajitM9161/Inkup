@@ -3,12 +3,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { useToolStore } from '../../lib/store';
-import { Trash2 /*, Plus, Minus */ } from 'lucide-react';
+import { Trash2, Pen /*, Plus, Minus */ } from 'lucide-react';
 // import { useCanvasZoom } from './useCanvasZoom';
 import { useCanvasExport } from './useCanvasExport';
 import MaskOverlay from './MaskOverlay';
 import Loader from '../ui/CrazyLoader';
 import toast from 'react-hot-toast';
+import PromptBox from '../prompt/PromptBox';
 
 interface UserCanvasProps {
   canvasRef: React.RefObject<ReactSketchCanvasRef | null>;
@@ -31,6 +32,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   const { clearCanvas } = useCanvasExport(canvasRef);
 
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isPromptOpen, setIsPromptOpen] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleClearAll = () => {
@@ -71,6 +73,46 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
     toast.error('Image failed to load.');
   };
 
+const handlePromptSubmit = async (prompt: string) => {
+  try {
+    const userImage = useToolStore.getState().userImage;
+    if (!userImage) {
+      toast.error("No image selected.");
+      return;
+    }
+
+    // If blob → convert to base64
+    let imageToSend = userImage;
+    if (userImage.startsWith("blob:")) {
+      const response = await fetch(userImage);
+      const blob = await response.blob();
+      imageToSend = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    const res = await fetch("http://localhost:3001/api/images/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, image: imageToSend }),
+    });
+
+    const data = await res.json();
+    if (res.ok && data.images?.length) {
+      useToolStore.getState().setResultImage(data.images[0]);
+      toast.success("Image edited successfully!");
+    } else {
+      toast.error(data.error || "Failed to edit image.");
+    }
+  } catch (err) {
+    console.error(err);
+    toast.error("Something went wrong.");
+  }
+};
+
   return (
     <div
       // onWheel={handleWheelZoom}  // zoom disabled
@@ -84,20 +126,28 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
         backdrop-blur-md
       "
     >
-      {/* Controls */}
+
       <div className="absolute top-2 right-2 z-30 flex flex-col gap-2">
-        {/*
-        <button onClick={zoomIn} className="bg-[#222] text-white p-1 rounded hover:bg-[#333]">
-          <Plus size={18} />
+        <button
+          onClick={() => setIsPromptOpen(true)}
+          className="bg-[#222] text-white p-1 rounded hover:bg-[#333]"
+        >
+          <Pen size={18} />
         </button>
-        <button onClick={zoomOut} className="bg-[#222] text-white p-1 rounded hover:bg-[#333]">
-          <Minus size={18} />
-        </button>
-        */}
-        <button onClick={handleClearAll} className="bg-[#222] text-white p-1 rounded hover:bg-[#333]">
+        <button
+          onClick={handleClearAll}
+          className="bg-[#222] text-white p-1 rounded hover:bg-[#333]"
+        >
           <Trash2 size={18} />
         </button>
       </div>
+
+      {/* PromptBox */}
+      <PromptBox
+        open={isPromptOpen}
+        onClose={() => setIsPromptOpen(false)}
+        onSubmit={handlePromptSubmit}
+      />
 
       {/* Main container (no zoom) */}
       <div className="absolute inset-0">

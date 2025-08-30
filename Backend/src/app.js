@@ -12,6 +12,7 @@ import ApiErrorHandler from './utils/apiErrorHandler.js';
 import generateRoutes from './routes/gerate.route.js';
 import tryonRoutes from './routes/tryon.route.js';
 import outputimage from './routes/outputimage.route.js';
+import imageRoutes from './routes/image.routes.js';
 import * as Sentry from '@sentry/node';
 import './instrument.js';
 
@@ -58,7 +59,7 @@ app.use('/', dashboardRoutes);
 app.use('/api/upload', generateRoutes);
 app.use('/api/tryon', tryonRoutes);
 app.use('/api', outputimage);
-
+app.use("/api/images", imageRoutes);
 app.get('/health', (req, res) => {
   res.status(200).json({ success: true, message: 'Server healthy' });
 });

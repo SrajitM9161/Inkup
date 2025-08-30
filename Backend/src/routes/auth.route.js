@@ -3,6 +3,7 @@ import passport from '../config/auth.config.js';
 import { generateToken } from '../utils/generateToken.js';
 import registerUser from '../controllers/auth.controller.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import logoutUser from '../controllers/logoutWithBusinessName.controller.js';
 import  cookie from 'cookie';
 
 const router = express.Router();
@@ -33,5 +34,5 @@ router.get(
 );
 
 router.post('/register', asyncHandler(registerUser));
-
+router.post('/logout', asyncHandler(logoutUser));
 export default router;

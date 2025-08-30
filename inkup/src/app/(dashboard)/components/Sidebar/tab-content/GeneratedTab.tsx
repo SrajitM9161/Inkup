@@ -22,60 +22,67 @@ export default function GeneratedOutputTab() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<HTMLDivElement | null>(null);
   const observerInstance = useRef<IntersectionObserver | null>(null);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchOutputImages = useCallback(async () => {
-    if (!hasMore || loading) return;
+const fetchOutputImages = useCallback(async () => {
+  if (!hasMore || loading) return;
 
-    setLoading(true);
-    setError('');
+  setLoading(true);
+  setError('');
 
-    try {
-      const response = await api.get(`api/user/outputs?page=${page}`);
-      const newImages: OutputImage[] = response.data?.data?.outputImages || [];
+  try {
+    const response = await api.get(`api/user/outputs?page=${page}&limit=20`);
+    const newImages: OutputImage[] = response.data?.data?.outputImages || [];
+    const serverHasMore: boolean = response.data?.data?.hasMore;
 
-      if (newImages.length === 0) {
-        setHasMore(false); // stop fetching
-      } else {
-        appendOutputImages(newImages);
-        setPage((prev) => prev + 1);
-      }
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.message || 'Failed to fetch images'
-      );
-    } finally {
-      setLoading(false);
+    if (newImages.length === 0) {
+      setHasMore(false);
+      return;
     }
-  }, [page, hasMore, loading, appendOutputImages]);
 
-  // Initial fetch
+    appendOutputImages(newImages);
+    setPage((prev) => prev + 1);
+    setHasMore(serverHasMore);
+  } catch (err: any) {
+    setError(err?.response?.data?.message || 'Failed to fetch images');
+  } finally {
+    setLoading(false);
+  }
+}, [page, hasMore, loading, appendOutputImages]);
+
+
   useEffect(() => {
     fetchOutputImages();
-  }, []); // only once on mount
+  }, []); 
 
-  // Intersection Observer for infinite scroll
+ 
   useEffect(() => {
-    if (!observerRef.current) return;
+    if (!observerRef.current || !hasMore) return;
 
-    // Disconnect old observer
     observerInstance.current?.disconnect();
 
     observerInstance.current = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (entry.isIntersecting && hasMore && !loading) {
-          fetchOutputImages();
+        if (entry.isIntersecting && !loading) {
+          if (debounceTimer.current) clearTimeout(debounceTimer.current);
+          debounceTimer.current = setTimeout(() => {
+            fetchOutputImages();
+          }, 400); 
         }
       },
       {
         root: containerRef.current,
-        threshold: 1.0,
+        threshold: 0.2,
       }
     );
 
     observerInstance.current.observe(observerRef.current);
 
-    return () => observerInstance.current?.disconnect();
+    return () => {
+      observerInstance.current?.disconnect();
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
   }, [fetchOutputImages, hasMore, loading]);
 
   return (
@@ -88,7 +95,7 @@ export default function GeneratedOutputTab() {
       <div className="grid grid-cols-2 gap-[6px]">
         {outputImages.map((img) => (
           <ImageCard
-            key={img.assetId} // use unique assetId instead of index
+            key={img.assetId}
             img={img.outputImageUrl}
             onClick={() => console.log('Clicked image:', img.outputImageUrl)}
           />
@@ -101,7 +108,9 @@ export default function GeneratedOutputTab() {
         <p className="text-center text-sm text-gray-400 mt-2">Loading...</p>
       )}
       {!hasMore && !loading && outputImages.length > 0 && (
-        <p className="text-center text-sm text-gray-500 mt-2">You’ve reached the end.</p>
+        <p className="text-center text-sm text-gray-500 mt-2">
+          You’ve reached the end.
+        </p>
       )}
     </div>
   );

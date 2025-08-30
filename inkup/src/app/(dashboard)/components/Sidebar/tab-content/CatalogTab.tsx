@@ -16,13 +16,13 @@ export default function CatalogTab({ onSelect }: CatalogTabProps) {
   const handleSelect = (img: string) => {
     setItemImage(img);
     toast.success('Tattoo image selected!');
-    onSelect?.(); // Close sidebar if passed
+    onSelect?.(); 
   };
 
   return (
     <div
       className="flex-1 overflow-y-auto"
-      style={{ maxHeight: 'calc(100vh - 140px)' }}
+      style={{ maxHeight: 'calc(100vh - 50px)' }}
       onScroll={(e) => {
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
         if (scrollTop + clientHeight >= scrollHeight - 50 && hasMore && !isLoading) {

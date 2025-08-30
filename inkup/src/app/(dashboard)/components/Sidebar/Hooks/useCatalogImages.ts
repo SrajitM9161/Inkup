@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import CatalogJson from '../../../../JSON/Catalog.json'; // adjust the path based on your structure
+import CatalogJson from '../../../../JSON/Catalog.json'; 
 
 interface CatalogItem {
   image: string;

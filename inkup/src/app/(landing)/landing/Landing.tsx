@@ -50,10 +50,12 @@ export default function HomePage({
   };
 
   return (
-    <main className="relative w-full min-h-screen bg-black text-white overflow-hidden flex flex-col items-center justify-start">
+    <main
+      className="relative w-full bg-black text-white overflow-hidden flex flex-col items-center justify-start flex-grow"
+    >
       <div className="w-full max-w-[1440px] flex flex-col items-center">
 
-        {/* === MOBILE + TABLET === */}
+        {/* MOBILE + TABLET */}
         <div className="w-full px-6 pt-6 flex flex-col lg:hidden">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -79,7 +81,7 @@ export default function HomePage({
                 </span>
               </h1>
               <p className="text-sm text-gray-400 mt-2">
-                Virtual AI tryons of body arts for brands
+                Virtual AI tryons of body arts for brand
               </p>
             </div>
           </motion.div>
@@ -110,23 +112,11 @@ export default function HomePage({
               className="border border-[#d0fe17] text-[#d0fe17] h-[40px] rounded-full font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition"
             >
               Contact us
-              <svg
-                width="20"
-                height="20"
-                fill="none"
-                viewBox="0 0 20 20"
-                aria-hidden="true"
-              >
-                <path
-                  d="M14.4977 6.79778C14.5241 6.5229 14.3226 6.2787 14.0477 6.25234L9.56827 5.8228C9.29339 5.79645 9.04919 5.99791 9.02283 6.2728C8.99647 6.54768 9.19794 6.79188 9.47282 6.81824L13.4546 7.20005L13.0727 11.1818C13.0464 11.4567 13.2479 11.7009 13.5227 11.7272C13.7976 11.7536 14.0418 11.5521 14.0682 11.2772L14.4977 6.79778Z"
-                  fill="#D0FE17"
-                />
-              </svg>
             </button>
           </div>
         </div>
 
-        {/* === DESKTOP === */}
+        {/* DESKTOP */}
         <div className="hidden lg:flex flex-col items-center w-full">
           <motion.div
             className="w-full flex justify-start py-3 px-8"
@@ -166,7 +156,7 @@ export default function HomePage({
                 <div className="flex flex-col md:flex-row justify-center items-center text-center gap-2 mt-2">
                   <span className="text-[28px]">your body art</span>
                   <span className="text-sm text-gray-400">
-                    Virtual AI tryons of body arts for brands
+                    Virtual AI tryons of body arts for brand
                   </span>
                 </div>
               </div>
@@ -217,7 +207,6 @@ export default function HomePage({
             </motion.div>
           </div>
         </div>
-
 
         <div ref={triggerRef} className="w-full h-0" />
       </div>

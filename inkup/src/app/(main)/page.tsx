@@ -17,8 +17,8 @@ export default function MainLanding() {
 
   return (
     <RedirectIfAuthenticated>
-      <div className="flex flex-col min-h-screen overflow-x-hidden">
-        {/* Main content area that grows */}
+      <div className="flex flex-col min-h-screen overflow-x-hidden bg-black text-white">
+        {/* Main content */}
         <main className="flex-grow">
           <HomePage
             onOpenModal={() => setShowModal(true)}
@@ -38,7 +38,7 @@ export default function MainLanding() {
           />
         </main>
 
-        {/* Sticky Footer */}
+        {/* Footer */}
         <Footer showFooter={showFooter} footerRef={footerRef} />
       </div>
     </RedirectIfAuthenticated>

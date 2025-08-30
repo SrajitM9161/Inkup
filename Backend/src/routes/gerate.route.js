@@ -7,5 +7,4 @@ const router = express.Router();
 
 router.post('/user-image', protect, upload.single('userImage'), uploadUserImage);
 router.post('/item-image', protect, upload.single('itemImage'), uploadItemImage);
-
 export default router;
