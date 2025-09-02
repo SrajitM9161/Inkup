@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { useToolStore, useEditToolStore } from '../../lib/store';
-import { Trash2, Maximize2, X } from 'lucide-react';
+import { Trash2, Maximize2, X, Upload } from 'lucide-react';
 import Loader from '../ui/CrazyLoader';
 import toast from 'react-hot-toast';
 
@@ -12,7 +12,7 @@ interface UserCanvasProps {
 }
 
 export default function UserCanvas({ canvasRef }: UserCanvasProps) {
-  const { userImage, tool, strokeWidth, isGenerating, setIsGenerating, clearPersistedImages } =
+  const { userImage, tool, strokeWidth, isGenerating, setIsGenerating, clearPersistedImages, setUserImage } =
     useToolStore();
   const { resultImages } = useEditToolStore();
 
@@ -59,6 +59,13 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
     clearPersistedImages();
   };
 
+  const handleSetAsBase = () => {
+    if (displayImage) {
+      setUserImage(displayImage);
+      toast.success('Latest output set as base image!');
+    }
+  };
+
   return (
     <>
       {/* Normal Canvas */}
@@ -77,6 +84,19 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
             <Maximize2 size={18} />
           </button>
         </div>
+
+        {/* Set as Base Button */}
+        {displayImage && (
+          <div className="absolute top-2 left-2 z-30">
+            <button
+              onClick={handleSetAsBase}
+              className="bg-[#222] text-white p-1 rounded hover:bg-[#333]"
+              title="Set as Base Image"
+            >
+              <Upload size={18} />
+            </button>
+          </div>
+        )}
 
         <div className="absolute inset-0">
           {displayImage && (
@@ -144,6 +164,19 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
                 <X size={20} />
               </button>
             </div>
+
+            {/* Fullscreen Set as Base */}
+            {displayImage && (
+              <div className="absolute top-4 left-4">
+                <button
+                  onClick={handleSetAsBase}
+                  className="bg-[#222] text-white p-2 rounded-full hover:bg-[#333]"
+                  title="Set as Base Image"
+                >
+                  <Upload size={20} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

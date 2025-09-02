@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEditToolStore, useToolStore } from "../../lib/store";
@@ -15,9 +15,40 @@ interface PromptBoxProps {
 export default function PromptBox({ open, onClose }: PromptBoxProps) {
   const [promptInput, setPromptInput] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [displayImage, setDisplayImage] = useState<string | null>(null);
 
   const { setPrompt, addResultImage, clearImages } = useEditToolStore();
-  const { setUserImage, setUploadModalOpen, setIsGenerating } = useToolStore();
+  const { userImage, setUserImage, setUploadModalOpen, setIsGenerating } = useToolStore();
+
+  // Show latest canvas/user image in modal preview
+  useEffect(() => {
+    if (userImage) setDisplayImage(userImage);
+  }, [userImage]);
+
+  // Convert canvas userImage to a File so handleSubmit works on first click
+ useEffect(() => {
+  if (userImage && files.length === 0) {
+    try {
+      const arr = userImage.split(',');
+      if (arr.length < 2) return; // invalid base64, skip
+
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      if (!mimeMatch) return; // invalid format, skip
+
+      const mime = mimeMatch[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) u8arr[n] = bstr.charCodeAt(n);
+
+      const file = new File([u8arr], "canvas-image.png", { type: mime });
+      setFiles([file]);
+    } catch (err) {
+      console.error("Failed to convert base64 to File:", err);
+    }
+  }
+}, [userImage]);
+
 
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -27,28 +58,55 @@ export default function PromptBox({ open, onClose }: PromptBoxProps) {
       reader.readAsDataURL(file);
     });
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const uploadedFiles = Array.from(e.target.files);
       setFiles(uploadedFiles);
-      fileToBase64(uploadedFiles[0]).then((base64) => {
-        clearImages();
-        setUserImage(base64);
-        setUploadModalOpen(true);
-      });
+
+      const base64 = await fileToBase64(uploadedFiles[0]);
+      clearImages();
+      setUserImage(base64);
+      setDisplayImage(base64);
+      setUploadModalOpen(true);
     }
   };
-const handleSubmit = async () => {
-  if (!promptInput.trim() || files.length === 0) {
-    toast.error("Please provide a prompt and upload at least one image.");
+
+ const handleSubmit = async () => {
+  if (!promptInput.trim() && !userImage) {
+    toast.error("Please provide a prompt or select an image.");
     return;
+  }
+
+  // Make sure files includes userImage if empty
+  if (files.length === 0 && userImage) {
+    const arr = userImage.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    if (mimeMatch && arr[1]) {
+      const mime = mimeMatch[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) u8arr[n] = bstr.charCodeAt(n);
+      setFiles([new File([u8arr], "canvas-image.png", { type: mime })]);
+    }
   }
 
   setPrompt(promptInput);
   setIsGenerating(true);
-  clearImages();
+  clearImages(); // now safe, files already include userImage
 
-  const base64Images = await Promise.all(files.map(fileToBase64));
+  const base64Images =
+    files.length > 0
+      ? await Promise.all(files.map(fileToBase64))
+      : userImage
+      ? [userImage]
+      : [];
+
+  if (base64Images.length === 0) {
+    toast.error("No image available to send to API.");
+    setIsGenerating(false);
+    return;
+  }
 
   const fetchImages = editImages(promptInput, base64Images).then((data) => {
     if (data?.data?.outputAssets?.length) {
@@ -64,7 +122,7 @@ const handleSubmit = async () => {
   toast.promise(fetchImages, {
     loading: "Generating images...",
     success: (msg) => msg,
-    error: (err) => err.message || "Something went wrong while generating.",
+    error: (err) => err.message || "Something went wrong.",
   });
 
   try {
@@ -104,6 +162,18 @@ const handleSubmit = async () => {
                 <X size={20} />
               </button>
             </div>
+
+            {/* Preview Latest Image */}
+            {displayImage && (
+              <div className="mb-3 w-full h-40 flex items-center justify-center border border-[#333] rounded-lg overflow-hidden">
+                <img
+                  src={displayImage}
+                  alt="Base"
+                  className="object-contain w-full h-full"
+                  draggable={false}
+                />
+              </div>
+            )}
 
             <textarea
               value={promptInput}

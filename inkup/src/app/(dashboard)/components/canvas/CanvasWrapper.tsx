@@ -10,7 +10,7 @@ interface CanvasWrapperProps {
 export default function CanvasWrapper({ canvasRef }: CanvasWrapperProps) {
   return (
     <div className="relative">
-      <UserCanvas canvasRef={canvasRef} />
+      <UserCanvas canvasRef={canvasRef}  />
       {/* <ItemCanvas /> */}
     </div>
   );
