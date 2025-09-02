@@ -5,13 +5,15 @@ import {
   Pencil,
   Eraser,
   Undo2,
-  Redo2
+  Redo2,
+  MessageSquarePlus, 
 } from 'lucide-react';
 import { useToolStore } from '../../lib/store';
 import { ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { toast } from 'react-hot-toast';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import PromptBox from '../prompt/PromptBox'; 
 
 interface BottomToolbarTopProps {
   canvasRef: React.RefObject<ReactSketchCanvasRef | null>;
@@ -23,8 +25,10 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
     tool,
     setTool,
     strokeWidth,
-    setStrokeWidth
+    setStrokeWidth,
   } = useToolStore();
+
+  const [promptOpen, setPromptOpen] = useState(false);
 
   useKeyboardShortcuts(canvasRef);
 
@@ -58,7 +62,7 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
         new Promise((res, rej) => {
           overlay.onload = res;
           overlay.onerror = rej;
-        })
+        }),
       ]);
 
       const canvas = document.createElement('canvas');
@@ -97,59 +101,77 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
     }
   };
 
+  const handlePromptSubmit = (prompt: string) => {
+    toast.success(`Prompt submitted: ${prompt}`);
+    // here you can forward to useEditToolStore.setPrompt(prompt) etc.
+  };
+
   return (
-    <div
-      className="
-        w-fit flex items-center justify-center 
-        gap-2 px-3.5 py-1.5 
-        bg-[#1C1C1C] 
-        border border-[#333] 
-        rounded-lg
-      "
-    >
-      <Pencil
-        size={26}
-        className={`
-          p-1 rounded-md cursor-pointer transition-colors 
-          ${tool === 'pen' ? 'bg-[#D0FE17] text-black' : 'text-white/70'}
-        `}
-        onClick={() => handleToolChange('pen')}
-      />
+    <>
+      <div
+        className="
+          w-fit flex items-center justify-center 
+          gap-2 px-3.5 py-1.5 
+          bg-[#1C1C1C] 
+          border border-[#333] 
+          rounded-lg
+        "
+      >
+        <Pencil
+          size={26}
+          className={`
+            p-1 rounded-md cursor-pointer transition-colors 
+            ${tool === 'pen' ? 'bg-[#D0FE17] text-black' : 'text-white/70'}
+          `}
+          onClick={() => handleToolChange('pen')}
+        />
 
-      <Eraser
-        size={26}
-        className={`
-          p-1 rounded-md cursor-pointer transition-colors 
-          ${tool === 'eraser' ? 'bg-[#D0FE17] text-black' : 'text-white/70'}
-        `}
-        onClick={() => handleToolChange('eraser')}
-      />
+        <Eraser
+          size={26}
+          className={`
+            p-1 rounded-md cursor-pointer transition-colors 
+            ${tool === 'eraser' ? 'bg-[#D0FE17] text-black' : 'text-white/70'}
+          `}
+          onClick={() => handleToolChange('eraser')}
+        />
 
-      <Undo2
-        size={20}
-        className="text-white/70 cursor-pointer"
-        onClick={undo}
-      />
-      <Redo2
-        size={20}
-        className="text-white/70 cursor-pointer"
-        onClick={redo}
-      />
+        <Undo2
+          size={20}
+          className="text-white/70 cursor-pointer"
+          onClick={undo}
+        />
+        <Redo2
+          size={20}
+          className="text-white/70 cursor-pointer"
+          onClick={redo}
+        />
 
-      <input
-        type="range"
-        min={1}
-        max={30}
-        value={strokeWidth}
-        onChange={handleStrokeWidthChange}
-        className="w-24 accent-[#D0FE17]"
-      />
+        <input
+          type="range"
+          min={1}
+          max={30}
+          value={strokeWidth}
+          onChange={handleStrokeWidthChange}
+          className="w-24 accent-[#D0FE17]"
+        />
 
-      <Download
-        size={20}
-        className="text-white/70 cursor-pointer"
-        onClick={handleDownload}
+        <Download
+          size={20}
+          className="text-white/70 cursor-pointer"
+          onClick={handleDownload}
+        />
+
+        <MessageSquarePlus
+          size={22}
+          className="text-white/70 cursor-pointer"
+          onClick={() => setPromptOpen(true)}
+        />
+      </div>
+
+      <PromptBox
+        open={promptOpen}
+        onClose={() => setPromptOpen(false)}
       />
-    </div>
+    </>
   );
 }

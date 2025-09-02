@@ -4,11 +4,15 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import CatalogTab from './tab-content/CatalogTab';
 import GeneratedTab from './tab-content/GeneratedTab';
+import UserTattooTab from './tab-content/UsertattooTab';
+import EditedOutputTab from './tab-content/EditedOutputTab'; // 👈 import here
 import AccountBadge from './Profile/AccountBadge';
 
 const defaultTabs = [
-  { key: 'catalog', label: 'InkaraAI workspace' },
+  { key: 'catalog', label: 'InkaraAI Tattoo’s' },
   { key: 'generated', label: 'User Generations' },
+  { key: 'edited', label: 'Edited Generations' }, // 👈 new tab
+  { key: 'user-tattoos', label: 'My Tattoos' },
 ] as const;
 
 type Tab = (typeof defaultTabs)[number];
@@ -26,7 +30,6 @@ export default function CatalogSidebar({
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -43,6 +46,8 @@ export default function CatalogSidebar({
     if (activeTab.key === 'catalog')
       return <CatalogTab onSelect={isMobileSidebarOpen ? onClose : undefined} />;
     if (activeTab.key === 'generated') return <GeneratedTab />;
+    if (activeTab.key === 'edited') return <EditedOutputTab />; // 👈 added
+    if (activeTab.key === 'user-tattoos') return <UserTattooTab />;
   };
 
   return (
@@ -65,15 +70,18 @@ export default function CatalogSidebar({
         </div>
       )}
 
+      {/* Profile info */}
       <div className="px-4 py-3 border-b border-[#1E1E1E]">
-        {/* <AccountBadge
+        <AccountBadge
           name="User Name"
           company="company"
           email="business@mail.com"
           phone="+91 1234567890"
           credits={20}
-        /> */}
+        />
       </div>
+
+      {/* Dropdown */}
       <div className="px-4 py-3 relative z-20" ref={dropdownRef}>
         <div
           className={`w-full border-[0.5px] rounded-lg bg-[#0B0B0B] ${
@@ -89,9 +97,7 @@ export default function CatalogSidebar({
           </button>
 
           {isOpen && (
-            <ul
-              className="absolute left-0 top-full w-[calc(100%+2rem)] -ml-4 bg-[#0B0B0B] rounded-b-lg border border-[#333] shadow-lg z-50"
-            >
+            <ul className="absolute left-0 top-full w-[calc(100%+2rem)] -ml-4 bg-[#0B0B0B] rounded-b-lg border border-[#333] shadow-lg z-50">
               {tabs.map((tab) => (
                 <li
                   key={tab.key}
@@ -113,9 +119,8 @@ export default function CatalogSidebar({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
-        {renderTabContent()}
-      </div>
+      {/* Tab content */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4">{renderTabContent()}</div>
     </aside>
   );
 }

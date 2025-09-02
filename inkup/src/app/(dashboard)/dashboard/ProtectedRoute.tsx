@@ -1,71 +1,22 @@
-// 'use client';
-
-// import { useEffect, useState } from 'react';
-// import { useAuth } from '../../Hooks/useAuth.hook';
-// import SignupModal from '../../(modals)/modals/SignupModal';
-
-// export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-//   const { authenticated, loading, refreshAuth } = useAuth();
-//   const [showSignupModal, setShowSignupModal] = useState(false);
-
-//   useEffect(() => {
-//     if (!loading && !authenticated) {
-//       setShowSignupModal(true);
-//     }
-//   }, [loading, authenticated]);
-
-//   if (loading) return null;
-
-//   if (!authenticated) {
-//     return (
-//       <SignupModal
-//         isOpen={showSignupModal}
-//         onClose={() => setShowSignupModal(false)}
-//         onSuccess={async () => {
-//           await refreshAuth();
-//           setShowSignupModal(false);
-//         }}
-//         // ❌ No token storagea
-//         onSubmit={() => {}}
-//       />
-//     );
-//   }
-
-//   return <>{children}</>;
-// }
-
-
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../Hooks/useAuth.hook';
 import SignupModal from '../../(modals)/modals/SignupModal';
-import ComingSoon from './commingsoon';
+
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { authenticated, loading, allowedUser, refreshAuth } = useAuth();
+  const { authenticated, loading, refreshAuth } = useAuth();
   const [showSignupModal, setShowSignupModal] = useState(false);
-  const [showAccessDenied, setShowAccessDenied] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
-      if (!authenticated) {
-        setShowSignupModal(true);
-        setShowAccessDenied(false);
-      } else if (authenticated && !allowedUser) {
-        // User logged in but not in whitelist
-        setShowSignupModal(false);
-        setShowAccessDenied(true);
-      } else {
-        setShowSignupModal(false);
-        setShowAccessDenied(false);
-      }
+    if (!loading && !authenticated) {
+      setShowSignupModal(true);
     }
-  }, [loading, authenticated, allowedUser]);
+  }, [loading, authenticated]);
 
   if (loading) return null;
 
-  if (showSignupModal) {
+  if (!authenticated) {
     return (
       <SignupModal
         isOpen={showSignupModal}
@@ -79,14 +30,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     );
   }
 
-  if (showAccessDenied) {
-    return (
-      <div>
-        <ComingSoon />
-      </div>
-    );
-  }
-
   return <>{children}</>;
 }
+
 

@@ -6,35 +6,58 @@ import prisma from "../../prisma/prismaClient.js";
 
 export const uploadTattoo = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-  const file = req.file;
+  const files = req.files; 
+  if (!files || files.length === 0) {
+    throw new ApiErrorHandler(400, "At least one tattoo image is required");
+  }
 
-  if (!file) throw new ApiErrorHandler(400, "Tattoo image is required");
+  const uploadedTattoos = [];
 
-  const url = await uploadImageToCloudinary(file.path);
+  for (const file of files) {
+    const url = await uploadImageToCloudinary(file.path);
 
-  const tattoo = await prisma.tattoo.create({
-    data: {
-      userId,
-      imageUrl: url,
-    },
-  });
+    const tattoo = await prisma.tattoo.create({
+      data: {
+        userId,
+        imageUrl: url,
+      },
+    });
 
-  return new ApiResponseHandler(200, "Tattoo uploaded successfully", {
-    tattooId: tattoo.id,
-    imageUrl: tattoo.imageUrl,
+    uploadedTattoos.push({
+      tattooId: tattoo.id,
+      imageUrl: tattoo.imageUrl,
+    });
+  }
+
+  return new ApiResponseHandler(200, "Tattoos uploaded successfully", {
+    count: uploadedTattoos.length,
+    tattoos: uploadedTattoos,
   }).send(res);
 });
 
 export const getUserTattoos = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
-  const tattoos = await prisma.tattoo.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-  });
+  // pagination params
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 12;
+  const skip = (page - 1) * limit;
+
+  const [tattoos, total] = await Promise.all([
+    prisma.tattoo.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    prisma.tattoo.count({ where: { userId } }),
+  ]);
 
   return new ApiResponseHandler(200, "User tattoos fetched", {
-    count: tattoos.length,
+    page,
+    limit,
+    total,
+    pages: Math.ceil(total / limit),
     tattoos,
   }).send(res);
 });

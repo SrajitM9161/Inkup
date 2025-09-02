@@ -9,10 +9,11 @@ import passport from './config/auth.config.js';
 import authRoutes from './routes/auth.route.js';
 import dashboardRoutes from './routes/dashbord.route.js';
 import ApiErrorHandler from './utils/apiErrorHandler.js';
-import generateRoutes from './routes/gerate.route.js';
+import generateRoutes from './routes/uploads.route.js';
 import tryonRoutes from './routes/tryon.route.js';
 import outputimage from './routes/outputimage.route.js';
-import imageRoutes from './routes/image.routes.js';
+import imageRoutes from './routes/editimage.routes.js';
+import uploadUsertatto from './routes/uploadusertattoo.routes.js';
 import * as Sentry from '@sentry/node';
 import './instrument.js';
 
@@ -60,6 +61,7 @@ app.use('/api/upload', generateRoutes);
 app.use('/api/tryon', tryonRoutes);
 app.use('/api', outputimage);
 app.use("/api/images", imageRoutes);
+app.use("/api/tattoo", uploadUsertatto);
 app.get('/health', (req, res) => {
   res.status(200).json({ success: true, message: 'Server healthy' });
 });

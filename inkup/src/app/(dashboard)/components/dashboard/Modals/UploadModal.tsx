@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import Modal from '../../ui/Modal';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
-import { useToolStore } from '../../../lib/store';
+import { useToolStore, useEditToolStore } from '../../../lib/store';
 import CameraCapture from '../../../../components/CameraCapture';
 import { ImagePlus, Camera } from 'lucide-react';
 
@@ -23,14 +23,33 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const setUserImage = useToolStore((s) => s.setUserImage);
   const setUploadedFile = useToolStore((s) => s.setUploadedFile);
   const setUploadModalOpen = useToolStore((s) => s.setUploadModalOpen);
+  const setIsGenerating = useToolStore((s) => s.setIsGenerating);
+  const clearImages = useEditToolStore((s) => s.clearImages);
+  const setResultImages = useEditToolStore((s) => s.setResultImages);
+
+  const fileToBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
   const handleUpload = async () => {
     if (!preview || !userFile) {
-      return toast.error('Please select or capture an image!');
+      toast.error('Please select or capture an image!');
+      return;
     }
     setIsUploading(true);
 
-    setUserImage(preview);
+    const base64 = preview.startsWith('blob:')
+      ? await fileToBase64(userFile)
+      : preview;
+
+    setIsGenerating(false);
+    setResultImages([]);
+    clearImages();
+    setUserImage(base64);
     setUploadedFile(userFile);
     setUploadModalOpen(false);
     toast.success('Image uploaded!');
@@ -53,9 +72,7 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
           <ImagePlus size={40} className="text-[#d0fe17]" />
         </div>
         <h2 className="text-xl font-semibold">Image Placement</h2>
-        <p className="text-gray-400 text-sm">
-          Add image and visualize tattoo – draw, erase, adjust, apply your touch.
-        </p>
+        <p className="text-gray-400 text-sm">Add image and visualize tattoo – draw, erase, adjust.</p>
 
         <div className="space-y-2">
           {preview && (
@@ -71,7 +88,6 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
           )}
 
           <div className="flex justify-center gap-2">
- 
             <button
               onClick={() => inputRef.current?.click()}
               className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1"
@@ -80,7 +96,6 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
               Upload Image
             </button>
 
- 
             <button
               onClick={() => setShowCamera(true)}
               className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1"
@@ -105,7 +120,6 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
           />
         </div>
 
-
         <button
           onClick={handleUpload}
           disabled={!preview || isUploading}
@@ -123,4 +137,3 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
     </Modal>
   );
 }
-

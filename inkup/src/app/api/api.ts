@@ -106,6 +106,33 @@ export const generateTryonImage = async (
   return imageRes.data?.data?.outputImageUrl;
 };
 
+export const uploadUserTattoos = async (tattooFiles: File[]) => {
+  const formData = new FormData();
+  tattooFiles.forEach((file) => {
+    formData.append('tattoos', file); 
+  });
+
+  const response = await api.post('/api/tattoo/upload', formData, {
+    withCredentials: true,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+  return response.data;
+};
+
+
+export const getUserTattoos = async (page = 1, limit = 12) => {
+  const res = await api.get(`/api/tattoo/my-tattoos?page=${page}&limit=${limit}`, {
+    withCredentials: true,
+  });
+  return res.data;
+};
+
+export const editImages = async (prompt: string, images: string[]) => {
+  const res = await api.post("/api/images/edit", { prompt, images });
+  return res.data;
+};
+
 
 export default api;
 

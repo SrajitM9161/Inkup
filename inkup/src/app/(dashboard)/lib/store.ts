@@ -1,13 +1,20 @@
-import { create } from 'zustand';
-import type { Tool, ModelType } from '../components/types/tool';
-import type { Bookmark } from '../components/types/bookmark';
+import { create } from "zustand";
+import type { Tool, ModelType } from "../components/types/tool";
+import type { Bookmark } from "../components/types/bookmark";
 
-// ========== TYPES ==========
 export interface OutputImage {
   generationId: string;
   assetId: string;
   outputImageUrl: string;
   createdAt: string;
+}
+
+interface OutputStoreState {
+  outputImages: OutputImage[];
+  setOutputImages: (images: OutputImage[]) => void;
+  addOutputImage: (image: OutputImage) => void;
+  clearOutputImages: () => void;
+  appendOutputImages: (images: OutputImage[]) => void;
 }
 
 interface ToolState {
@@ -53,26 +60,27 @@ interface ToolState {
 
   addBookmark: (img: string, tag?: string) => void;
   removeBookmark: (index: number) => void;
-
   addGeneratedItem: (img: string) => void;
   clearGeneratedItems: () => void;
 
   reset: () => void;
   clearPersistedImages: () => void;
-
   undo: () => void;
   redo: () => void;
 }
 
-interface OutputStoreState {
-  outputImages: OutputImage[];
-  setOutputImages: (images: OutputImage[]) => void;
-  addOutputImage: (image: OutputImage) => void;
-  clearOutputImages: () => void;
-  appendOutputImages: (images: OutputImage[]) => void;
+interface EditToolState {
+  prompt: string;
+  resultImages: string[];
+
+  setPrompt: (prompt: string) => void;
+  setResultImages: (imgs: string[]) => void;
+  addResultImage: (img: string) => void;
+  clearImages: () => void;
+
+  reset: () => void;
 }
 
-// ========== TOOL STORE ==========
 export const useToolStore = create<ToolState>((set) => ({
   userImage: null,
   uploadedFile: null,
@@ -80,19 +88,19 @@ export const useToolStore = create<ToolState>((set) => ({
 
   itemImage: null,
   customItemImage: null,
-  itemTool: 'pen',
+  itemTool: "pen",
   itemStrokeWidth: 5,
 
   mask: null,
   resultImage: null,
   isGenerating: false,
-  tool: 'pen',
+  tool: "pen",
   strokeWidth: 10,
   bookmarks: [],
-  model: 'Basic',
-  aspectRatio: '1:1',
+  model: "Basic",
+  aspectRatio: "1:1",
   maskOpacity: 1,
-  penColor: '#ff0000',
+  penColor: "#ff0000",
   generatedItems: [],
 
   setUserImage: (img) => set({ userImage: img }),
@@ -118,34 +126,20 @@ export const useToolStore = create<ToolState>((set) => ({
     set((state) => ({
       bookmarks: [
         ...state.bookmarks,
-        {
-          image,
-          tag,
-          timestamp: new Date().toISOString(),
-          model: state.model,
-        },
+        { image, tag, timestamp: new Date().toISOString(), model: state.model },
       ],
     })),
-
   removeBookmark: (index) =>
     set((state) => ({
       bookmarks: state.bookmarks.filter((_, i) => i !== index),
     })),
 
   addGeneratedItem: (img) =>
-    set((state) => ({
-      generatedItems: [...state.generatedItems, img].slice(-10),
-    })),
-
+    set((state) => ({ generatedItems: [...state.generatedItems, img].slice(-10) })),
   clearGeneratedItems: () => set({ generatedItems: [] }),
 
-  undo: () => {
-    console.log('[store] Trigger canvas.undo() from component');
-  },
-
-  redo: () => {
-    console.log('[store] Trigger canvas.redo() from component');
-  },
+  undo: () => {},
+  redo: () => {},
 
   reset: () =>
     set({
@@ -154,49 +148,60 @@ export const useToolStore = create<ToolState>((set) => ({
       isUploadModalOpen: false,
       itemImage: null,
       customItemImage: null,
-      itemTool: 'pen',
+      itemTool: "pen",
       itemStrokeWidth: 5,
       mask: null,
       resultImage: null,
       isGenerating: false,
-      tool: 'pen',
+      tool: "pen",
       strokeWidth: 10,
       bookmarks: [],
-      model: 'Basic',
-      aspectRatio: '1:1',
+      model: "Basic",
+      aspectRatio: "1:1",
       maskOpacity: 1,
-      penColor: '#ff0000',
+      penColor: "#ff0000",
       generatedItems: [],
     }),
 
   clearPersistedImages: () => {
     set({ userImage: null, itemImage: null });
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('tool-store');
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("tool-store");
     }
   },
 }));
 
-// ========== OUTPUT STORE ==========
+export const useEditToolStore = create<EditToolState>((set) => ({
+  prompt: "",
+  resultImages: [],
+
+  setPrompt: (prompt) => set({ prompt }),
+  setResultImages: (imgs) => set({ resultImages: imgs }),
+  addResultImage: (img) =>
+    set((state) => ({ resultImages: [...state.resultImages, img].slice(-10) })),
+  clearImages: () => set({ resultImages: [] }),
+
+  reset: () => set({ prompt: "", resultImages: [] }),
+}));
+
 export const useOutputStore = create<OutputStoreState>((set, get) => ({
   outputImages: [],
 
   setOutputImages: (images) => set({ outputImages: images }),
-
   addOutputImage: (image) =>
     set((state) => ({
       outputImages: [...state.outputImages, image].slice(-10),
     })),
-
   clearOutputImages: () => set({ outputImages: [] }),
 
   appendOutputImages: (images) => {
     const existing = get().outputImages;
-
     const combined = [...existing, ...images];
 
-    // Deduplicate by `assetId`
-    const unique = Array.from(new Map(combined.map(img => [img.assetId, img])).values());
+    // Deduplicate by assetId
+    const unique = Array.from(
+      new Map(combined.map((img) => [img.assetId, img])).values()
+    );
 
     set({ outputImages: unique });
   },

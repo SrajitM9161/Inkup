@@ -26,6 +26,7 @@ model User {
   @@index([email])
   @@index([phoneNumber])
   tattoos      Tattoo[]
+  editGenerations EditGeneration[]
 
 }
 
@@ -104,6 +105,36 @@ model Tattoo {
 
 
 enum GenerationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model EditGeneration {
+  id          String       @id @default(uuid()) @db.Uuid
+  userId      String?      @db.Uuid
+  prompt      String
+  status      EditStatus   @default(PENDING)
+  createdAt   DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime     @default(now()) @updatedAt @db.Timestamp(6)
+
+  user        User?        @relation(fields: [userId], references: [id])
+  assets      EditAsset[]
+}
+
+model EditAsset {
+  id               String         @id @default(uuid()) @db.Uuid
+  editGenerationId String         @db.Uuid
+
+  inputImageUrl    String?
+  outputImageUrl   String?
+
+  createdAt        DateTime       @default(now())
+  editGeneration   EditGeneration @relation(fields: [editGenerationId], references: [id], onDelete: Cascade)
+}
+
+enum EditStatus {
   PENDING
   PROCESSING
   COMPLETED
