@@ -1,5 +1,5 @@
-'use client';
 
+'use client';
 import { useRef, useState } from 'react';
 import Modal from '../../ui/Modal';
 import Image from 'next/image';
@@ -42,20 +42,22 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
     }
     setIsUploading(true);
 
-    const base64 = preview.startsWith('blob:')
-      ? await fileToBase64(userFile)
-      : preview;
-
-    setIsGenerating(false);
-    setResultImages([]);
-    clearImages();
-    setUserImage(base64);
-    setUploadedFile(userFile);
-    setUploadModalOpen(false);
-    toast.success('Image uploaded!');
-    onClose();
-
-    setIsUploading(false);
+    try {
+      const base64 = preview.startsWith('blob:') ? await fileToBase64(userFile) : preview;
+      // Important: clear outputs before setting new base to avoid flicker/race
+      setIsGenerating(false);
+      setResultImages([]);
+      clearImages();
+      setUserImage(base64);
+      setUploadedFile(userFile);
+      setUploadModalOpen(false);
+      toast.success('Image uploaded!');
+      onClose();
+    } catch (e) {
+      toast.error('Failed to process image');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleCameraCapture = (file: File, base64: string) => {
@@ -77,29 +79,17 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
         <div className="space-y-2">
           {preview && (
             <div className="w-full">
-              <Image
-                src={preview}
-                alt="Preview"
-                width={300}
-                height={300}
-                className="object-contain max-h-48 mx-auto rounded"
-              />
+              <Image src={preview} alt="Preview" width={300} height={300} className="object-contain max-h-48 mx-auto rounded" />
             </div>
           )}
 
           <div className="flex justify-center gap-2">
-            <button
-              onClick={() => inputRef.current?.click()}
-              className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1"
-            >
+            <button onClick={() => inputRef.current?.click()} className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1">
               <ImagePlus size={16} />
               Upload Image
             </button>
 
-            <button
-              onClick={() => setShowCamera(true)}
-              className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1"
-            >
+            <button onClick={() => setShowCamera(true)} className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1">
               <Camera size={16} />
               Use Camera
             </button>
@@ -120,19 +110,12 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
           />
         </div>
 
-        <button
-          onClick={handleUpload}
-          disabled={!preview || isUploading}
-          className="w-full mt-4 px-4 py-2 text-sm border border-[#D0FE17] text-[#D0FE17] rounded transition-all duration-200 hover:bg-[#D0FE17] hover:text-black hover:font-bold hover:border-transparent disabled:opacity-50"
-        >
+        <button onClick={handleUpload} disabled={!preview || isUploading} className="w-full mt-4 px-4 py-2 text-sm border border-[#D0FE17] text-[#D0FE17] rounded transition-all duration-200 hover:bg-[#D0FE17] hover:text-black hover:font-bold hover:border-transparent disabled:opacity-50">
           {isUploading ? 'Uploading...' : 'Confirm & Upload'}
         </button>
       </div>
       {showCamera && (
-        <CameraCapture
-          onCapture={handleCameraCapture}
-          onCancel={() => setShowCamera(false)}
-        />
+        <CameraCapture onCapture={handleCameraCapture} onCancel={() => setShowCamera(false)} />
       )}
     </Modal>
   );

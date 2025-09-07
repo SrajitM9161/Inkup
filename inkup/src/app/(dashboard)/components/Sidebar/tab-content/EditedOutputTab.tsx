@@ -1,20 +1,14 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import api from '../../../../api/api';
 import ImageCard from '../ImageCard';
-import { useEditToolStore, useToolStore } from '../../../lib/store';
-
-interface EditOutputImage {
-  editGenerationId: string;
-  assetId: string;
-  outputImageUrl: string;
-  createdAt: string;
-}
+import { useToolStore } from '../../../lib/store';
+import { getUserEditOutputs } from '../../../../api/api';
+import { useEditedOutputStore } from '../../../lib/editedOutputStore';
 
 export default function EditedOutputTab() {
-  const { resultImages, addResultImage, clearImages } = useEditToolStore();
-  const { setUserImage, setUploadModalOpen } = useToolStore(); // 👈 use ToolStore
+  const { editedImages, addEditedImages } = useEditedOutputStore();
+  const { setUserImage, setUploadModalOpen } = useToolStore();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,17 +27,16 @@ export default function EditedOutputTab() {
     setError('');
 
     try {
-      const response = await api.get(`api/user/outputs/edit?page=${page}&limit=20`);
-      const newImages: EditOutputImage[] = response.data?.data?.outputImages || [];
-      const serverHasMore: boolean = response.data?.data?.hasMore;
+      const response = await getUserEditOutputs(page, 20);
+      const newImages = response?.data?.outputImages || [];
+      const serverHasMore: boolean = response?.data?.hasMore;
 
       if (newImages.length === 0) {
         setHasMore(false);
         return;
       }
 
-      newImages.forEach((img) => addResultImage(img.outputImageUrl));
-
+      addEditedImages(newImages); // ✅ store whole objects
       setPage((prev) => prev + 1);
       setHasMore(serverHasMore);
     } catch (err: any) {
@@ -51,11 +44,12 @@ export default function EditedOutputTab() {
     } finally {
       setLoading(false);
     }
-  }, [page, hasMore, loading, addResultImage]);
+  }, [page, hasMore, loading, addEditedImages]);
 
   useEffect(() => {
-    clearImages();
-    fetchEditOutputImages();
+    if (editedImages.length === 0) {
+      fetchEditOutputImages();
+    }
   }, []);
 
   useEffect(() => {
@@ -89,19 +83,19 @@ export default function EditedOutputTab() {
 
   return (
     <div ref={containerRef} className="h-[calc(100vh-64px)] overflow-y-auto p-1">
-      {resultImages.length === 0 && !loading && !error && (
+      {editedImages.length === 0 && !loading && !error && (
         <p className="text-sm text-gray-400 mt-2">No edited images found.</p>
       )}
       {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
 
       <div className="grid grid-cols-2 gap-[6px]">
-        {resultImages.map((url, idx) => (
+        {editedImages.map((img) => (
           <ImageCard
-            key={idx}
-            img={url}
+            key={img.assetId}
+            img={img.outputImageUrl}
             onClick={() => {
-              setUserImage(url); // 👈 set image into ToolStore
-              setUploadModalOpen(true); // 👈 open modal with this image
+              setUserImage(img.outputImageUrl);
+              setUploadModalOpen(true);
             }}
           />
         ))}
@@ -112,7 +106,7 @@ export default function EditedOutputTab() {
       {loading && (
         <p className="text-center text-sm text-gray-400 mt-2">Loading...</p>
       )}
-      {!hasMore && !loading && resultImages.length > 0 && (
+      {!hasMore && !loading && editedImages.length > 0 && (
         <p className="text-center text-sm text-gray-500 mt-2">
           You’ve reached the end.
         </p>
