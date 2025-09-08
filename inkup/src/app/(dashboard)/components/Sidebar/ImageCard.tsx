@@ -60,13 +60,13 @@ export default function ImageCard({
 
       {showControls && (
         <div className="absolute top-1 right-1 flex gap-1">
-          <button
+          {/* <button
             onClick={handleSetAsBaseClick}
             className="bg-[#222]/70 text-white p-1 rounded-md hover:bg-[#333]"
             title="Set as Base Image"
           >
             <Upload size={16} />
-          </button>
+          </button> */}
           <button
             onClick={handleMaximizeClick}
             className="bg-[#222]/70 text-white p-1 rounded-md hover:bg-[#333]"
