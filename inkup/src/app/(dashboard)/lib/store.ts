@@ -1,7 +1,9 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { Tool, ModelType } from "../components/types/tool";
 import type { Bookmark } from "../components/types/bookmark";
 
+/* -------------------- Types -------------------- */
 export interface OutputImage {
   generationId: string;
   assetId: string;
@@ -18,20 +20,25 @@ interface OutputStoreState {
 }
 
 interface ToolState {
+  /* Core session */
   userImage: string | null;
   uploadedFile: File | null;
   isUploadModalOpen: boolean;
 
+  /* Item tools */
   itemImage: string | null;
   customItemImage: string | null;
   itemTool: Tool;
   itemStrokeWidth: number;
 
+  /* Editing state */
   mask: string | null;
   resultImage: string | null;
   isGenerating: boolean;
   tool: Tool;
   strokeWidth: number;
+
+  /* Meta */
   bookmarks: Bookmark[];
   model: ModelType;
   aspectRatio: string;
@@ -39,6 +46,7 @@ interface ToolState {
   penColor: string;
   generatedItems: string[];
 
+  /* Actions */
   setUserImage: (img: string | null) => void;
   setUploadedFile: (file: File | null) => void;
   setUploadModalOpen: (val: boolean) => void;
@@ -60,13 +68,15 @@ interface ToolState {
 
   addBookmark: (img: string, tag?: string) => void;
   removeBookmark: (index: number) => void;
+
   addGeneratedItem: (img: string) => void;
   clearGeneratedItems: () => void;
 
-  reset: () => void;
-  clearPersistedImages: () => void;
   undo: () => void;
   redo: () => void;
+
+  reset: () => void;
+  clearPersistedImages: () => void;
 }
 
 interface EditToolState {
@@ -77,32 +87,38 @@ interface EditToolState {
   setResultImages: (imgs: string[]) => void;
   addResultImage: (img: string) => void;
   clearImages: () => void;
-
   reset: () => void;
 }
 
+/* -------------------- Tool Store -------------------- */
 export const useToolStore = create<ToolState>((set) => ({
+  /* Core session */
   userImage: null,
   uploadedFile: null,
   isUploadModalOpen: false,
 
+  /* Item tools */
   itemImage: null,
   customItemImage: null,
   itemTool: "pen",
   itemStrokeWidth: 5,
 
+  /* Editing state */
   mask: null,
   resultImage: null,
   isGenerating: false,
   tool: "pen",
   strokeWidth: 10,
+
+  /* Meta */
   bookmarks: [],
-  model: "Basic",
+  model: "Basic" as ModelType,
   aspectRatio: "1:1",
   maskOpacity: 1,
   penColor: "#ff0000",
   generatedItems: [],
 
+  /* Actions */
   setUserImage: (img) => set({ userImage: img }),
   setUploadedFile: (file) => set({ uploadedFile: file }),
   setUploadModalOpen: (val) => set({ isUploadModalOpen: val }),
@@ -135,7 +151,9 @@ export const useToolStore = create<ToolState>((set) => ({
     })),
 
   addGeneratedItem: (img) =>
-    set((state) => ({ generatedItems: [...state.generatedItems, img].slice(-10) })),
+    set((state) => ({
+      generatedItems: [...state.generatedItems, img].slice(-10),
+    })),
   clearGeneratedItems: () => set({ generatedItems: [] }),
 
   undo: () => {},
@@ -156,7 +174,7 @@ export const useToolStore = create<ToolState>((set) => ({
       tool: "pen",
       strokeWidth: 10,
       bookmarks: [],
-      model: "Basic",
+      model: "Basic" as ModelType,
       aspectRatio: "1:1",
       maskOpacity: 1,
       penColor: "#ff0000",
@@ -171,38 +189,50 @@ export const useToolStore = create<ToolState>((set) => ({
   },
 }));
 
-export const useEditToolStore = create<EditToolState>((set) => ({
-  prompt: "",
-  resultImages: [],
+/* -------------------- Edit Tool Store (Persisted) -------------------- */
+export const useEditToolStore = create<EditToolState>()(
+  persist(
+    (set) => ({
+      prompt: "",
+      resultImages: [],
 
-  setPrompt: (prompt) => set({ prompt }),
-  setResultImages: (imgs) => set({ resultImages: imgs }),
-  addResultImage: (img) =>
-    set((state) => ({ resultImages: [...state.resultImages, img].slice(-10) })),
-  clearImages: () => set({ resultImages: [] }),
+      setPrompt: (prompt) => set({ prompt }),
+      setResultImages: (imgs) => set({ resultImages: imgs }),
+      addResultImage: (img) =>
+        set((state) => ({
+          resultImages: [...state.resultImages, img].slice(-20), // keep last 20
+        })),
+      clearImages: () => set({ resultImages: [] }),
+      reset: () => set({ prompt: "", resultImages: [] }),
+    }),
+    { name: "edit-tool-store" }
+  )
+);
 
-  reset: () => set({ prompt: "", resultImages: [] }),
-}));
+/* -------------------- Output Store (Persisted) -------------------- */
+export const useOutputStore = create<OutputStoreState>()(
+  persist(
+    (set, get) => ({
+      outputImages: [],
 
-export const useOutputStore = create<OutputStoreState>((set, get) => ({
-  outputImages: [],
+      setOutputImages: (images) => set({ outputImages: images }),
+      addOutputImage: (image) =>
+        set((state) => ({
+          outputImages: [...state.outputImages, image].slice(-20), // keep last 20
+        })),
+      clearOutputImages: () => set({ outputImages: [] }),
 
-  setOutputImages: (images) => set({ outputImages: images }),
-  addOutputImage: (image) =>
-    set((state) => ({
-      outputImages: [...state.outputImages, image].slice(-10),
-    })),
-  clearOutputImages: () => set({ outputImages: [] }),
+      appendOutputImages: (images) => {
+        const existing = get().outputImages;
+        const combined = [...existing, ...images];
 
-  appendOutputImages: (images) => {
-    const existing = get().outputImages;
-    const combined = [...existing, ...images];
+        const unique = Array.from(
+          new Map(combined.map((img) => [img.assetId, img])).values()
+        );
 
-    // Deduplicate by assetId
-    const unique = Array.from(
-      new Map(combined.map((img) => [img.assetId, img])).values()
-    );
-
-    set({ outputImages: unique });
-  },
-}));
+        set({ outputImages: unique });
+      },
+    }),
+    { name: "output-store" }
+  )
+);

@@ -1,5 +1,4 @@
 'use client';
-
 import { useRef, useState } from 'react';
 import Modal from '../../ui/Modal';
 import Image from 'next/image';
@@ -7,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useToolStore, useEditToolStore } from '../../../lib/store';
 import CameraCapture from '../../../../components/CameraCapture';
 import { ImagePlus, Camera } from 'lucide-react';
+import { isHeicFile, convertHeicToJpeg } from '../../../lib/heic';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -42,20 +42,22 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
     }
     setIsUploading(true);
 
-    const base64 = preview.startsWith('blob:')
-      ? await fileToBase64(userFile)
-      : preview;
-
-    setIsGenerating(false);
-    setResultImages([]);
-    clearImages();
-    setUserImage(base64);
-    setUploadedFile(userFile);
-    setUploadModalOpen(false);
-    toast.success('Image uploaded!');
-    onClose();
-
-    setIsUploading(false);
+    try {
+      const base64 = preview.startsWith('blob:') ? await fileToBase64(userFile) : preview;
+      setIsGenerating(false);
+      setResultImages([]);
+      clearImages();
+      setUserImage(base64);
+      setUploadedFile(userFile);
+      setUploadModalOpen(false);
+      toast.success('Image uploaded!');
+      onClose();
+    } catch (e) {
+      toast.error('Failed to process image');
+      console.error(e);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleCameraCapture = (file: File, base64: string) => {
@@ -72,7 +74,9 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
           <ImagePlus size={40} className="text-[#d0fe17]" />
         </div>
         <h2 className="text-xl font-semibold">Image Placement</h2>
-        <p className="text-gray-400 text-sm">Add image and visualize tattoo – draw, erase, adjust.</p>
+        <p className="text-gray-400 text-sm">
+          Add image and visualize tattoo – draw, erase, adjust.
+        </p>
 
         <div className="space-y-2">
           {preview && (
@@ -110,11 +114,25 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => {
+            onChange={async (e) => {
               const file = e.target.files?.[0];
-              if (file) {
-                setUserFile(file);
-                setPreview(URL.createObjectURL(file));
+              if (!file) return;
+
+              try {
+                let finalFile = file;
+
+                if (await isHeicFile(file)) {
+                 toast("Converting HEIC → JPEG…", { icon: "🔄" });
+                  finalFile = await convertHeicToJpeg(file);
+                  toast.dismiss();
+                  toast.success('Converted to JPEG!');
+                }
+
+                setUserFile(finalFile);
+                setPreview(URL.createObjectURL(finalFile));
+              } catch (err) {
+                toast.error('Failed to process HEIC file');
+                console.error(err);
               }
             }}
           />
@@ -128,6 +146,7 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
           {isUploading ? 'Uploading...' : 'Confirm & Upload'}
         </button>
       </div>
+
       {showCamera && (
         <CameraCapture
           onCapture={handleCameraCapture}

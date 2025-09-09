@@ -5,13 +5,13 @@ import { ChevronDown } from 'lucide-react';
 import CatalogTab from './tab-content/CatalogTab';
 import GeneratedTab from './tab-content/GeneratedTab';
 import UserTattooTab from './tab-content/UsertattooTab';
-// import EditedOutputTab from './tab-content/EditedOutputTab'; // 👈 import here
+// import EditedOutputTab from './tab-content/EditedOutputTab'; 
 import AccountBadge from './Profile/AccountBadge';
 
 const defaultTabs = [
   { key: 'catalog', label: 'InkaraAI Tattoo’s' },
   { key: 'generated', label: 'User Generations' },
-  // { key: 'edited', label: 'Edited Generations' }, // 👈 new tab
+  // { key: 'edited', label: 'Edited Generations' }, 
   { key: 'user-tattoos', label: 'My Tattoos' },
 ] as const;
 
@@ -46,7 +46,7 @@ export default function CatalogSidebar({
     if (activeTab.key === 'catalog')
       return <CatalogTab onSelect={isMobileSidebarOpen ? onClose : undefined} />;
     if (activeTab.key === 'generated') return <GeneratedTab />;
-    // if (activeTab.key === 'edited') return <EditedOutputTab />; // 👈 added
+    // if (activeTab.key === 'edited') return <EditedOutputTab />; 
     if (activeTab.key === 'user-tattoos') return <UserTattooTab />;
   };
 

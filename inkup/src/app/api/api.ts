@@ -133,6 +133,15 @@ export const editImages = async (prompt: string, images: string[]) => {
   return res.data;
 };
 
+// ✅ Fetch user's edit output images
+export const getUserEditOutputs = async (page = 1, limit = 20) => {
+  const res = await api.get(`/api/user/outputs/edit?page=${page}&limit=${limit}`, {
+    withCredentials: true,
+  });
+  return res.data;
+};
+
+
 
 export default api;
 

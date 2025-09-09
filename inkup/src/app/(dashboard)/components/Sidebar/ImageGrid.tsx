@@ -1,13 +1,13 @@
 'use client';
 
 import ImageCard from './ImageCard';
-import { ReactNode } from 'react'; // ✅ import ReactNode
+import { ReactNode } from 'react';
 
 interface CatalogItem {
   image?: string;
   style?: string;
   source?: string;
-  customRender?: ReactNode; // ✅ safe now
+  customRender?: ReactNode;
 }
 
 export default function ImageGrid({
@@ -21,11 +21,11 @@ export default function ImageGrid({
     <div className="h-full overflow-y-auto grid grid-cols-2 gap-[6px] p-1">
       {images.map((item, index) =>
         item.customRender ? (
-          <div key={index}>{item.customRender}</div> // ✅ handle custom card
+          <div key={index}>{item.customRender}</div>
         ) : (
           <ImageCard
             key={index}
-            img={item.image ?? ''} // ✅ fallback so it's always a string
+            img={item.image ?? ''}
             onClick={() => onSelect(item.image ?? '')}
           />
         )

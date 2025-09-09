@@ -73,12 +73,10 @@ export default function DashboardPage() {
       </Suspense>
 
       <div className="w-screen h-screen overflow-hidden flex flex-row-reverse bg-dot-pattern text-white">
-        {/* Desktop Sidebar */}
         <div className="hidden lg:block w-[320px] shrink-0 border-l border-white/10 bg-[#0D0D0D]">
           <CatalogSidebar />
         </div>
 
-        {/* Mobile Sidebar */}
         {sidebarOpenMobile && (
   <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex justify-end">
     <div className="w-[320px] bg-[#0D0D0D] h-full relative z-[10000]">
@@ -90,12 +88,10 @@ export default function DashboardPage() {
     <div className="flex-1" onClick={() => setSidebarOpenMobile(false)} />
   </div>
 )}
-        {/* Main Content */}
         <div className="flex-1 h-full flex flex-col overflow-hidden relative">
           <UploadModal isOpen={uploadModalOpen} onClose={() => setUploadModalOpen(false)} />
           <ItemUploadModal isOpen={itemUploadModalOpen} onClose={() => setItemUploadModalOpen(false)} />
 
-          {/* Header (Mobile) */}
           <div className="flex lg:hidden justify-between items-center px-4 py-3 border-b border-white/10 bg-[#0D0D0D]">
             <button
               onClick={() => setSidebarOpenMobile(true)}
@@ -104,8 +100,6 @@ export default function DashboardPage() {
               <Menu size={25} />
             </button>
           </div>
-
-          {/* Main Canvas Area */}
           <main className="flex-1 overflow-y-auto px-4 py-6 flex flex-col items-center gap-6">
             {!userImage? (
               <div className="text-center mt-10">
