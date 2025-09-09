@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { useOutputStore, useToolStore } from '../../../lib/store'
+import { useToolStore } from '../../../lib/store'
 import api from '../../../../api/api'
+import { getUserEditOutputs } from '../../../../api/api'
 import ImageCard from '../ImageCard'
 import toast from 'react-hot-toast'
 import { X } from 'lucide-react'
@@ -14,14 +15,22 @@ interface OutputImage {
   createdAt: string
 }
 
-export default function GeneratedOutputTab() {
-  const { outputImages, appendOutputImages } = useOutputStore()
-  const { setUserImage } = useToolStore()
+type CombinedOutputImage = OutputImage & {
+  type: 'generated' | 'edited'
+}
+
+export default function GeneratedTab() {
+  const { setUserImage, setUploadModalOpen } = useToolStore()
+
+  const [allImages, setAllImages] = useState<CombinedOutputImage[]>([])
+
+  const [generatedPage, setGeneratedPage] = useState(1)
+  const [editedPage, setEditedPage] = useState(1)
+  const [hasMoreGenerated, setHasMoreGenerated] = useState(true)
+  const [hasMoreEdited, setHasMoreEdited] = useState(true)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null)
 
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -29,60 +38,115 @@ export default function GeneratedOutputTab() {
   const observerInstance = useRef<IntersectionObserver | null>(null)
   const debounceTimer = useRef<NodeJS.Timeout | null>(null)
 
-  const fetchOutputImages = useCallback(async () => {
-    if (!hasMore || loading) return;
-    setLoading(true);
-    setError('');
+  const fetchData = useCallback(async () => {
+    if ((!hasMoreGenerated && !hasMoreEdited) || loading) return
+
+    setLoading(true)
+    setError('')
+
     try {
-      const response = await api.get(`api/user/outputs?page=${page}&limit=20`);
-      const newImages: OutputImage[] = response.data?.data?.outputImages || [];
-      const serverHasMore: boolean = response.data?.data?.hasMore;
-      if (newImages.length === 0) {
-        setHasMore(false);
-        return;
+      const generatedPromise = hasMoreGenerated
+        ? api.get(`api/user/outputs?page=${generatedPage}&limit=20`)
+        : Promise.resolve(null)
+
+      const editedPromise = hasMoreEdited
+        ? getUserEditOutputs(editedPage, 20)
+        : Promise.resolve(null)
+
+      const [generatedResponse, editedResponse] = await Promise.all([
+        generatedPromise,
+        editedPromise,
+      ])
+
+      let newGeneratedImages: CombinedOutputImage[] = []
+      if (generatedResponse) {
+        const images: OutputImage[] = generatedResponse.data?.data?.outputImages || []
+        const serverHasMore: boolean = generatedResponse.data?.data?.hasMore
+        newGeneratedImages = images.map((img) => ({ ...img, type: 'generated' }))
+        setHasMoreGenerated(serverHasMore)
+        if (images.length > 0) setGeneratedPage((prev) => prev + 1)
       }
-      appendOutputImages(newImages);
-      setPage((prev) => prev + 1);
-      setHasMore(serverHasMore);
+
+      let newEditedImages: CombinedOutputImage[] = []
+      if (editedResponse) {
+        const images: OutputImage[] = editedResponse?.data?.outputImages || []
+        const serverHasMore: boolean = editedResponse?.data?.hasMore
+        newEditedImages = images.map((img) => ({ ...img, type: 'edited' }))
+        setHasMoreEdited(serverHasMore)
+        if (images.length > 0) setEditedPage((prev) => prev + 1)
+      }
+      
+      const combinedNewImages = [...newGeneratedImages, ...newEditedImages]
+
+      if (combinedNewImages.length > 0) {
+        setAllImages((prevImages) => {
+          const imageMap = new Map<string, CombinedOutputImage>()
+          ;[...prevImages, ...combinedNewImages].forEach((img) =>
+            imageMap.set(img.assetId, img)
+          )
+          
+          return Array.from(imageMap.values()).sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+        })
+      }
+
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to fetch images');
+      setError(err?.response?.data?.message || 'Failed to fetch images')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [page, hasMore, loading, appendOutputImages]);
+  }, [
+    loading,
+    generatedPage,
+    editedPage,
+    hasMoreGenerated,
+    hasMoreEdited,
+  ])
 
   useEffect(() => {
-    if (outputImages.length === 0) {
-      fetchOutputImages();
+    if (allImages.length === 0) {
+      fetchData()
     }
-  }, []);
+  }, [fetchData])
 
   useEffect(() => {
-    if (!observerRef.current || !hasMore) return;
-    observerInstance.current?.disconnect();
+    const hasMore = hasMoreGenerated || hasMoreEdited
+    if (!observerRef.current || !hasMore) return
+
+    observerInstance.current?.disconnect()
     observerInstance.current = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0];
+        const entry = entries[0]
         if (entry.isIntersecting && !loading) {
-          if (debounceTimer.current) clearTimeout(debounceTimer.current);
+          if (debounceTimer.current) clearTimeout(debounceTimer.current)
           debounceTimer.current = setTimeout(() => {
-            fetchOutputImages();
-          }, 400);
+            fetchData()
+          }, 400)
         }
       },
-      { root: containerRef.current, threshold: 0.2, }
-    );
-    observerInstance.current.observe(observerRef.current);
-    return () => {
-      observerInstance.current?.disconnect();
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    };
-  }, [fetchOutputImages, hasMore, loading]);
+      { root: containerRef.current, threshold: 0.2 }
+    )
 
-  const handleSetAsBase = (imageUrl: string) => {
-    setUserImage(imageUrl)
-    toast.success('Image set as base on canvas!')
+    observerInstance.current.observe(observerRef.current)
+
+    return () => {
+      observerInstance.current?.disconnect()
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    }
+  }, [fetchData, loading, hasMoreGenerated, hasMoreEdited])
+
+  const handleSetAsBase = (image: CombinedOutputImage) => {
+    setUserImage(image.outputImageUrl)
+    if (image.type === 'edited') {
+      setUploadModalOpen(true)
+      toast.success('Image loaded for editing!')
+    } else {
+      toast.success('Image set as base on canvas!')
+    }
   }
+
+  const hasMore = hasMoreGenerated || hasMoreEdited
 
   return (
     <>
@@ -90,19 +154,19 @@ export default function GeneratedOutputTab() {
         ref={containerRef}
         className="h-[calc(100vh-64px)] overflow-y-auto p-1"
       >
-        {outputImages.length === 0 && !loading && !error && (
+        {allImages.length === 0 && !loading && !error && (
           <p className="text-sm text-gray-400 mt-2">No output images found.</p>
         )}
         {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
 
         <div className="grid grid-cols-2 gap-[6px]">
-          {outputImages.map((img) => (
+          {allImages.map((img) => (
             <ImageCard
               key={img.assetId}
               img={img.outputImageUrl}
               showControls={true}
               onMaximize={() => setFullscreenImage(img.outputImageUrl)}
-              onSetAsBase={() => handleSetAsBase(img.outputImageUrl)}
+              onSetAsBase={() => handleSetAsBase(img)}
             />
           ))}
         </div>
@@ -112,7 +176,7 @@ export default function GeneratedOutputTab() {
         {loading && (
           <p className="text-center text-sm text-gray-400 mt-2">Loading...</p>
         )}
-        {!hasMore && !loading && outputImages.length > 0 && (
+        {!hasMore && !loading && allImages.length > 0 && (
           <p className="text-center text-sm text-gray-500 mt-2">
             You’ve reached the end.
           </p>
