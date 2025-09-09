@@ -12,7 +12,8 @@ import { v4 as uuidv4 } from "uuid";
 fal.config({ credentials: process.env.FAL_KEY });
 
 export const editImage = asyncHandler(async (req, res) => {
-  const { prompt, images, userId } = req.body;
+  const userId = req.user.id;
+  const { prompt, images } = req.body;
 
   if (!prompt || !images?.length) {
     throw new ApiErrorHandler(400, "Prompt and images are required");
@@ -21,7 +22,7 @@ export const editImage = asyncHandler(async (req, res) => {
   // 1. Create EditGeneration
   const editGeneration = await prisma.editGeneration.create({
     data: {
-      userId: userId || null,
+      userId,
       prompt,
       status: "PROCESSING",
     },
