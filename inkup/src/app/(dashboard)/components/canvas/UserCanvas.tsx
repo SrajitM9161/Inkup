@@ -20,7 +20,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
     clearPersistedImages,
     setUserImage,
   } = useToolStore()
-  const { resultImages } = useEditToolStore()
+  const { resultImages, clearImages } = useEditToolStore()
 
   const [imageLoaded, setImageLoaded] = useState(false)
   const [displayImage, setDisplayImage] = useState<string | null>(null)
@@ -62,28 +62,42 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   const handleClearAll = () => {
     canvasRef.current?.resetCanvas()
     clearPersistedImages()
+    clearImages()
     setDisplayImage(null)
     shownRef.current = null
   }
 
   const handleSetAsBase = () => {
-    const current = shownRef.current || latest || userImage
-    if (current) {
-      setUserImage(current)
+    const currentImageOnCanvas = shownRef.current
+
+    if (currentImageOnCanvas) {
+      if (userImage === currentImageOnCanvas) {
+        toast('This is already the base image.')
+        return
+      }
+
+      setUserImage(currentImageOnCanvas)
+      clearImages()
+
       toast.success('Latest output set as base image!')
     }
   }
 
   return (
     <>
-
       <div className="relative w-[280px] h-[420px] md:w-[360px] md:h-[540px] lg:w-[280px] lg:h-[420px] rounded-[20px] overflow-hidden border border-[#333] shadow-[0_0_30px_rgba(255,255,255,0.05)] backdrop-blur-md">
         {/* Controls */}
         <div className="absolute top-2 right-2 z-30 flex flex-col gap-2">
-          <button onClick={handleClearAll} className="bg-[#222] text-white p-1 rounded hover:bg-[#333]">
+          <button
+            onClick={handleClearAll}
+            className="bg-[#222] text-white p-1 rounded hover:bg-[#333]"
+          >
             <Trash2 size={18} />
           </button>
-          <button onClick={() => setIsFullscreen(true)} className="bg-[#222] text-white p-1 rounded hover:bg-[#333]">
+          <button
+            onClick={() => setIsFullscreen(true)}
+            className="bg-[#222] text-white p-1 rounded hover:bg-[#333]"
+          >
             <Maximize2 size={18} />
           </button>
         </div>
@@ -125,7 +139,9 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
         {(isGenerating || (!imageLoaded && (latest || userImage))) && (
           <div className="absolute inset-0 z-50 bg-black/50 flex flex-col items-center justify-center">
             <Loader />
-            <p className="text-sm text-white mt-3 animate-pulse">Generating Your Image…</p>
+            <p className="text-sm text-white mt-3 animate-pulse">
+              Generating Your Image…
+            </p>
           </div>
         )}
       </div>
@@ -139,12 +155,17 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
               draggable={false}
             />
 
-            {/* Controls */}
             <div className="absolute top-4 right-4 flex gap-2">
-              <button onClick={handleClearAll} className="bg-[#222] text-white p-2 rounded-full hover:bg-[#333]">
+              <button
+                onClick={handleClearAll}
+                className="bg-[#222] text-white p-2 rounded-full hover:bg-[#333]"
+              >
                 <Trash2 size={20} />
               </button>
-              <button onClick={() => setIsFullscreen(false)} className="bg-[#222] text-white p-2 rounded-full hover:bg-[#333]">
+              <button
+                onClick={() => setIsFullscreen(false)}
+                className="bg-[#222] text-white p-2 rounded-full hover:bg-[#333]"
+              >
                 <X size={20} />
               </button>
             </div>
