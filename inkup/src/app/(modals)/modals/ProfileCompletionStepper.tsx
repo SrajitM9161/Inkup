@@ -47,7 +47,7 @@ export default function ProfileCompletionStepper({ initialData, onSuccess }: Pro
       const { businessName, phoneNumber, address } = data;
       await updateMe({ businessName, phoneNumber, address });
       
-      toast.success('🎉 Profile completed successfully!');
+      toast.success('Profile completed successfully!');
       onSuccess?.();
       router.push('/dashboard');
     } catch (err: any) {
