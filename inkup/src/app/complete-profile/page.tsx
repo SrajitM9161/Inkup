@@ -1,81 +1,66 @@
-// // app/complete-profile/page.tsx
-// "use client";
+'use client';
 
-// import { useSearchParams } from "next/navigation";
-// import { useState } from "react";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
+import { getMe } from '../api/api';
+import Image from 'next/image';
+import ProfileCompletionStepper from '../(modals)/modals/ProfileCompletionStepper';
 
-// export default function CompleteProfilePage() {
-//   const searchParams = useSearchParams();
-//   const missing = searchParams.get("missing")?.split(",") || [];
+type User = {
+  name: string;
+  email: string;
+  isProfileCompleted: boolean; // We now get this from the API
+};
 
-//   const [formData, setFormData] = useState({
-//     businessName: "",
-//     phone: "",
-//     address: "",
-//   });
+export default function CompleteProfilePage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     setFormData({ ...formData, [e.target.name]: e.target.value });
-//   };
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await getMe();
+        if (!userData) throw new Error('Not authenticated');
 
-//   const handleSubmit = (e: React.FormEvent) => {
-//     e.preventDefault();
-//     // 👉 Call API to update profile
-//     console.log("Submitting profile data:", formData);
-//   };
+        // ✅ Defensive Check: If profile is already complete, redirect to dashboard.
+        if (userData.isProfileCompleted) {
+          toast.success("Your profile is already complete!");
+          router.push('/dashboard');
+          return;
+        }
 
-//   return (
-//     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-//       <Card className="w-full max-w-md shadow-lg rounded-2xl">
-//         <CardHeader>
-//           <CardTitle className="text-xl font-semibold text-center">
-//             Complete Your Profile
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <form onSubmit={handleSubmit} className="space-y-4">
-//             {missing.includes("businessName") && (
-//               <Input
-//                 type="text"
-//                 name="businessName"
-//                 placeholder="Business Name"
-//                 value={formData.businessName}
-//                 onChange={handleChange}
-//                 required
-//               />
-//             )}
+        setUser(userData);
+      } catch (error) {
+        toast.error('Authentication failed. Please log in.');
+        router.push('/');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [router]);
 
-//             {missing.includes("phone") && (
-//               <Input
-//                 type="tel"
-//                 name="phone"
-//                 placeholder="Phone Number"
-//                 value={formData.phone}
-//                 onChange={handleChange}
-//                 required
-//               />
-//             )}
+  if (loading || !user) {
+    return <div className="flex justify-center items-center h-screen bg-gray-900 text-white">Loading your profile...</div>;
+  }
 
-//             {missing.includes("address") && (
-//               <Input
-//                 type="text"
-//                 name="address"
-//                 placeholder="Business Address"
-//                 value={formData.address}
-//                 onChange={handleChange}
-//                 required
-//               />
-//             )}
-
-//             <Button type="submit" className="w-full">
-//               Save & Continue
-//             </Button>
-//           </form>
-//         </CardContent>
-//       </Card>
-//     </div>
-//   );
-// }
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+      <div className="p-8 rounded-2xl w-full max-w-lg text-white shadow-2xl border border-white/50 bg-gradient-to-b from-[#d9d9d9]/20 to-[#f8f8f8]/20 backdrop-blur-[10px]">
+        <div className="flex justify-center items-center py-6">
+            <Image src="/logoinkara.png" alt="Logo" width={120} height={40} />
+        </div>
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold">Welcome, {user.name}!</h1>
+          <p className="text-gray-300">Let's complete your profile to get started.</p>
+        </div>
+        
+        <ProfileCompletionStepper
+          initialData={{ name: user.name, email: user.email }}
+        />
+      </div>
+    </div>
+  );
+}
