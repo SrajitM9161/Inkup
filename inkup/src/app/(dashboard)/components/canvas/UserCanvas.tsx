@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas'
 import { useToolStore, useEditToolStore } from '../../lib/store'
-import { Trash2, Maximize2, X, Upload } from 'lucide-react'
+import { Trash2, Maximize2, X, Pen } from 'lucide-react'
 import Loader from '../ui/CrazyLoader'
 import toast from 'react-hot-toast'
 
@@ -109,7 +109,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
               className="bg-[#222] text-white p-1 rounded hover:bg-[#333]"
               title="Set as Base Image"
             >
-              <Upload size={18} />
+              <Pen size={18} />
             </button>
           </div>
         )}
@@ -176,7 +176,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
                 className="bg-[#222] text-white p-2 rounded-full hover:bg-[#333]"
                 title="Set as Base Image"
               >
-                <Upload size={20} />
+                <Pen size={20} />
               </button>
             </div>
           </div>
