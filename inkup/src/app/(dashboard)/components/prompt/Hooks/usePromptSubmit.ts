@@ -2,7 +2,19 @@ import { useCallback } from "react";
 import toast from "react-hot-toast";
 import { editImages } from "../../../../api/api";
 import { useEditToolStore, useToolStore } from "../../../lib/store";
-import { fileToBase64, base64ToFile } from "./useFileUtils";
+import { base64ToFile } from "./useFileUtils";
+
+const urlToBase64 = async (url: string): Promise<string> => {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
 
 export const usePromptSubmit = (
   onClose: () => void,
@@ -11,10 +23,10 @@ export const usePromptSubmit = (
   displayImage: string | null
 ) => {
   const { setPrompt, addResultImage, clearImages } = useEditToolStore();
-  const { userImage, setIsGenerating } = useToolStore();
+  const { setIsGenerating } = useToolStore();
 
   const handleSubmit = useCallback(async () => {
-    const sourceImage = userImage || displayImage;
+    const sourceImage = displayImage;
 
     if (!promptInput.trim() && !sourceImage && files.length === 0) {
       toast.error("Please provide a prompt or select an image.");
@@ -26,19 +38,22 @@ export const usePromptSubmit = (
     setIsGenerating(true);
 
     try {
-      let localFiles: File[] = [];
-      if (files.length > 0) {
-        localFiles = files;
-      } else if (sourceImage) {
-        const f = base64ToFile(sourceImage);
-        if (f) localFiles = [f];
+      let imageToSend = sourceImage;
+
+      if (imageToSend && imageToSend.startsWith('http')) {
+        toast.loading('Preparing image...');
+        try {
+          imageToSend = await urlToBase64(imageToSend);
+        } catch (error) {
+          toast.dismiss();
+          toast.error("Failed to fetch the image for editing.");
+          setIsGenerating(false);
+          return;
+        }
+        toast.dismiss();
       }
 
-      const base64Images = localFiles.length
-        ? await Promise.all(localFiles.map(fileToBase64))
-        : sourceImage
-        ? [sourceImage]
-        : [];
+      const base64Images = imageToSend ? [imageToSend] : [];
 
       if (base64Images.length === 0) {
         toast.error("No image available to send to API.");
@@ -67,7 +82,7 @@ export const usePromptSubmit = (
     } finally {
       setIsGenerating(false);
     }
-  }, [promptInput, files, displayImage, userImage, onClose]);
+  }, [promptInput, files, displayImage, onClose, setPrompt, setIsGenerating, clearImages, addResultImage]);
 
   return handleSubmit;
 };
