@@ -75,7 +75,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
         toast('This is already the base image.')
         return
       }
-
+      
       setUserImage(currentImageOnCanvas)
       clearImages()
 
