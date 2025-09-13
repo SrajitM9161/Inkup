@@ -1,4 +1,3 @@
-
 'use client';
 import { useRef, useState } from 'react';
 import Modal from '../../ui/Modal';
@@ -7,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useToolStore, useEditToolStore } from '../../../lib/store';
 import CameraCapture from '../../../../components/CameraCapture';
 import { ImagePlus, Camera } from 'lucide-react';
+import { isHeicFile, convertHeicToJpeg } from '../../../lib/heic';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -44,7 +44,6 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
     try {
       const base64 = preview.startsWith('blob:') ? await fileToBase64(userFile) : preview;
-      // Important: clear outputs before setting new base to avoid flicker/race
       setIsGenerating(false);
       setResultImages([]);
       clearImages();
@@ -55,6 +54,7 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
       onClose();
     } catch (e) {
       toast.error('Failed to process image');
+      console.error(e);
     } finally {
       setIsUploading(false);
     }
@@ -74,22 +74,36 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
           <ImagePlus size={40} className="text-[#d0fe17]" />
         </div>
         <h2 className="text-xl font-semibold">Image Placement</h2>
-        <p className="text-gray-400 text-sm">Add image and visualize tattoo – draw, erase, adjust.</p>
+        <p className="text-gray-400 text-sm">
+          Add image and visualize tattoo – draw, erase, adjust.
+        </p>
 
         <div className="space-y-2">
           {preview && (
             <div className="w-full">
-              <Image src={preview} alt="Preview" width={300} height={300} className="object-contain max-h-48 mx-auto rounded" />
+              <Image
+                src={preview}
+                alt="Preview"
+                width={300}
+                height={300}
+                className="object-contain max-h-48 mx-auto rounded"
+              />
             </div>
           )}
 
           <div className="flex justify-center gap-2">
-            <button onClick={() => inputRef.current?.click()} className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1">
+            <button
+              onClick={() => inputRef.current?.click()}
+              className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1"
+            >
               <ImagePlus size={16} />
               Upload Image
             </button>
 
-            <button onClick={() => setShowCamera(true)} className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1">
+            <button
+              onClick={() => setShowCamera(true)}
+              className="px-3 py-2 text-sm bg-[#D0FE17]/2 border border-[#D0FE17] text-[#D0FE17] rounded-md hover:bg-[#d0fe17] hover:text-black hover:font-semibold hover:border-transparent flex items-center gap-1"
+            >
               <Camera size={16} />
               Use Camera
             </button>
@@ -100,22 +114,44 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => {
+            onChange={async (e) => {
               const file = e.target.files?.[0];
-              if (file) {
-                setUserFile(file);
-                setPreview(URL.createObjectURL(file));
+              if (!file) return;
+
+              try {
+                let finalFile = file;
+
+                if (await isHeicFile(file)) {
+                 toast("Converting HEIC → JPEG…", { icon: "🔄" });
+                  finalFile = await convertHeicToJpeg(file);
+                  toast.dismiss();
+                  toast.success('Converted to JPEG!');
+                }
+
+                setUserFile(finalFile);
+                setPreview(URL.createObjectURL(finalFile));
+              } catch (err) {
+                toast.error('Failed to process HEIC file');
+                console.error(err);
               }
             }}
           />
         </div>
 
-        <button onClick={handleUpload} disabled={!preview || isUploading} className="w-full mt-4 px-4 py-2 text-sm border border-[#D0FE17] text-[#D0FE17] rounded transition-all duration-200 hover:bg-[#D0FE17] hover:text-black hover:font-bold hover:border-transparent disabled:opacity-50">
+        <button
+          onClick={handleUpload}
+          disabled={!preview || isUploading}
+          className="w-full mt-4 px-4 py-2 text-sm border border-[#D0FE17] text-[#D0FE17] rounded transition-all duration-200 hover:bg-[#D0FE17] hover:text-black hover:font-bold hover:border-transparent disabled:opacity-50"
+        >
           {isUploading ? 'Uploading...' : 'Confirm & Upload'}
         </button>
       </div>
+
       {showCamera && (
-        <CameraCapture onCapture={handleCameraCapture} onCancel={() => setShowCamera(false)} />
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onCancel={() => setShowCamera(false)}
+        />
       )}
     </Modal>
   );

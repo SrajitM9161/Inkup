@@ -21,50 +21,29 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
-    return res.status(409).json({
-      success: false,
-      message: 'Email already registered',
-    });
+    return res.status(409).json({ success: false, message: 'Email already registered' });
   }
 
-  // ✅ Check if phone number is already in use
   const existingPhone = await prisma.user.findUnique({ where: { phoneNumber } });
   if (existingPhone) {
-    return res.status(409).json({
-      success: false,
-      message: 'Phone number already registered',
-    });
+    return res.status(409).json({ success: false, message: 'Phone number already registered' });
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  let newUser;
-  try {
-    newUser = await prisma.user.create({
-      data: {
-        email,
-        name,
-        phoneNumber,
-        businessName,
-        address,
-        passwordHash: hashedPassword,
-      },
-    });
-  } catch (error) {
-    // ✅ Catch Prisma unique constraint errors just in case
-    if (error.code === 'P2002' && error.meta?.target?.includes('phoneNumber')) {
-      return res.status(409).json({
-        success: false,
-        message: 'Phone number already registered',
-      });
-    }
-    throw error;
-  }
-
-  const token = generateToken({
-    id: newUser.id,
-    email: newUser.email,
+  const newUser = await prisma.user.create({
+    data: {
+      email,
+      name,
+      phoneNumber,
+      businessName,
+      address,
+      passwordHash: hashedPassword,
+      isProfileCompleted: true, 
+    },
   });
+  
+  const token = generateToken({ id: newUser.id, email: newUser.email });
 
   const isProd = process.env.NODE_ENV === 'production';
   res.setHeader(

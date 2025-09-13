@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { Menu } from 'lucide-react';
 import { ReactSketchCanvasRef } from 'react-sketch-canvas';
 
-import { useToolStore } from '../lib/store';
+import { useToolStore, useEditToolStore } from '../lib/store';
 import CanvasWrapper from '../components/canvas/CanvasWrapper';
 import BottomBar from '../components/dashboard/BottomBar';
 import UploadModal from '../components/dashboard/Modals/UploadModal';
@@ -33,37 +33,41 @@ export default function DashboardPage() {
     setResultImage,
     setUserImage,
   } = useToolStore();
+  
+  const { addResultImage } = useEditToolStore();
+  
+  const handleGenerate = async () => {
+    if (!canvasRef.current || !userImage || !itemImage) {
+      toast.error('Upload both human and tattoo images first!');
+      return;
+    }
 
- const handleGenerate = async () => {
-  if (!canvasRef.current || !userImage || !itemImage) {
-    toast.error('Upload both human and tattoo images first!');
-    return;
-  }
+    try {
+      const mask = await canvasRef.current.exportImage('png');
+      toast.loading('Generating your image...');
+      setIsGenerating(true);
 
-  try {
-    const mask = await canvasRef.current.exportImage('png');
-    setIsGenerating(true);
+      const timeoutId = setTimeout(() => {
+        setIsGenerating(false);
+        toast.dismiss();
+        toast.error('Image generation timed out.');
+      }, 120000);
 
-    const timeoutId = setTimeout(() => {
+      const generated = await generateTryonImage(userImage, itemImage, mask);
+      clearTimeout(timeoutId);
+      
+      addResultImage(generated);
+      
+      canvasRef.current.clearCanvas();
+      setTool('pen');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to generate');
+    } finally {
       setIsGenerating(false);
       toast.dismiss();
-      toast.error('Image generation timed out.');
-    }, 120000);
-
-    const generated = await generateTryonImage(userImage, itemImage, mask);
-    clearTimeout(timeoutId);
-
-    setUserImage(generated);
-    setResultImage('');
-    canvasRef.current.clearCanvas();
-    setTool('pen');
-  } catch (err) {
-    console.error(err);
-    toast.error('Failed to generate');
-  } finally {
-    toast.dismiss();
-  }
-};
+    }
+  };
 
 
   return (

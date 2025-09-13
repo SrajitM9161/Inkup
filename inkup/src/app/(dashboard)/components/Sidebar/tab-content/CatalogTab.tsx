@@ -32,9 +32,8 @@ export default function CatalogTab({ onSelect }: CatalogTabProps) {
           )
         }
       >
-        {/* Thumbnail */}
         <Image
-          src="/demo.jpg" // ✅ put your demo thumbnail inside /public
+          src="/demo.jpg" 
           alt="Demo Video"
           width={300}
           height={300}

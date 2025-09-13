@@ -13,6 +13,7 @@ import generateRoutes from './routes/uploads.route.js';
 import tryonRoutes from './routes/tryon.route.js';
 import outputimage from './routes/outputimage.route.js';
 import imageRoutes from './routes/editimage.routes.js';
+import userRoutes from './routes/user.route.js';
 import uploadUsertatto from './routes/uploadusertattoo.routes.js';
 import * as Sentry from '@sentry/node';
 import './instrument.js';
@@ -57,6 +58,7 @@ app.use('/temp', express.static(path.join(process.cwd(), 'Public/temp')));
 // Your routes here (before Sentry error handler)
 app.use('/', authRoutes);
 app.use('/', dashboardRoutes);
+app.use('/', userRoutes);
 app.use('/api/upload', generateRoutes);
 app.use('/api/tryon', tryonRoutes);
 app.use('/api', outputimage);

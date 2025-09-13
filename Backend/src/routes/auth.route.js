@@ -4,14 +4,12 @@ import { generateToken } from '../utils/generateToken.js';
 import registerUser from '../controllers/auth.controller.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import logoutUser from '../controllers/logoutWithBusinessName.controller.js';
-import  cookie from 'cookie';
+import cookie from 'cookie';
 
 const router = express.Router();
 
-// Google OAuth entry
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// Google OAuth callback
 router.get(
   '/auth/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
@@ -29,7 +27,11 @@ router.get(
       })
     );
 
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+    if (!req.user.isProfileCompleted) {
+      res.redirect(`${process.env.CLIENT_URL}/complete-profile`);
+    } else {
+      res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+    }
   }
 );
 

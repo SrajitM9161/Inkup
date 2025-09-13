@@ -144,11 +144,11 @@ export default function SignupStepperForm({ onSubmit }: Props) {
         placeholder={placeholder}
         className="input w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         disabled={loading}
-        onBlur={() => {
-          const val = getValues(name);
-          const err = methods.formState.errors[name]?.message as string;
-          if (err) toast.error(err);
-        }}
+        // onBlur={() => {
+        //   const val = getValues(name);
+        //   const err = methods.formState.errors[name]?.message as string;
+        //   if (err) toast.error(err);
+        // }}
       />
     </div>
   );
