@@ -23,7 +23,6 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         const email = profile.emails?.[0]?.value;
-
         if (!email) {
           return done(new Error("Google account has no email associated"), null);
         }
@@ -46,23 +45,7 @@ passport.use(
               },
             },
           });
-
-          // Mark that profile completion is required for this new user
-          user.needsProfileCompletion = true;
-        } else {
-          // Existing user - check if profile completion is required
-          const requiredFields = ["businessName", "phoneNumber", "address"];
-          const missingFields = requiredFields.filter(
-            (field) => !user[field] || String(user[field]).trim() === ""
-          );
-          if (missingFields.length > 0) {
-            user.needsProfileCompletion = true;
-            user.missingFields = missingFields;
-          } else {
-            user.needsProfileCompletion = false;
-          }
         }
-
         return done(null, user);
       } catch (err) {
         console.error("Google Auth Error:", err);

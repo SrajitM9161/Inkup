@@ -25,6 +25,14 @@ export const registerUser = async (data: {
 //   return res.data;
 // };
 
+export const updateMe = async (data: {
+  businessName: string;
+  phoneNumber: string;
+  address: string;
+}) => {
+  const response = await api.patch('/me', data);
+  return response.data;
+};
 
 export const getMe = async () => {
   const res = await api.get('/me');

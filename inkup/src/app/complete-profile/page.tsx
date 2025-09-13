@@ -1,81 +1,76 @@
-// // app/complete-profile/page.tsx
-// "use client";
+'use client';
 
-// import { useSearchParams } from "next/navigation";
-// import { useState } from "react";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
+import { getMe } from '../api/api';
+import Image from 'next/image';
+import ProfileCompletionStepper from '../(modals)/modals/ProfileCompletionStepper';
+import ModalWrapper from '../(modals)/modals/components/ModalWrapper';
+import HomePage from '../(landing)/landing/Landing'; 
+import { useRef } from 'react';
 
-// export default function CompleteProfilePage() {
-//   const searchParams = useSearchParams();
-//   const missing = searchParams.get("missing")?.split(",") || [];
+type User = {
+  name: string;
+  email: string;
+  isProfileCompleted: boolean;
+};
 
-//   const [formData, setFormData] = useState({
-//     businessName: "",
-//     phone: "",
-//     address: "",
-//   });
+export default function CompleteProfilePage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     setFormData({ ...formData, [e.target.name]: e.target.value });
-//   };
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await getMe();
+        if (!userData) throw new Error('Not authenticated');
+        if (userData.isProfileCompleted) {
+          router.push('/dashboard');
+          return;
+        }
+        setUser(userData);
+      } catch (error) {
+        toast.error('Authentication failed. Please log in.');
+        router.push('/');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [router]);
 
-//   const handleSubmit = (e: React.FormEvent) => {
-//     e.preventDefault();
-//     // 👉 Call API to update profile
-//     console.log("Submitting profile data:", formData);
-//   };
+  const triggerRef = useRef<HTMLDivElement | null>(null);
+  const footerRef = useRef<HTMLDivElement | null>(null);
 
-//   return (
-//     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-//       <Card className="w-full max-w-md shadow-lg rounded-2xl">
-//         <CardHeader>
-//           <CardTitle className="text-xl font-semibold text-center">
-//             Complete Your Profile
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <form onSubmit={handleSubmit} className="space-y-4">
-//             {missing.includes("businessName") && (
-//               <Input
-//                 type="text"
-//                 name="businessName"
-//                 placeholder="Business Name"
-//                 value={formData.businessName}
-//                 onChange={handleChange}
-//                 required
-//               />
-//             )}
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-black text-white">
+      <div className="absolute inset-0 filter blur-md pointer-events-none" aria-hidden="true">
+        <HomePage
+          onOpenModal={() => {}}
+          setShowFooter={() => {}}
+          triggerRef={triggerRef}
+          footerRef={footerRef}
+        />
+      </div>
 
-//             {missing.includes("phone") && (
-//               <Input
-//                 type="tel"
-//                 name="phone"
-//                 placeholder="Phone Number"
-//                 value={formData.phone}
-//                 onChange={handleChange}
-//                 required
-//               />
-//             )}
-
-//             {missing.includes("address") && (
-//               <Input
-//                 type="text"
-//                 name="address"
-//                 placeholder="Business Address"
-//                 value={formData.address}
-//                 onChange={handleChange}
-//                 required
-//               />
-//             )}
-
-//             <Button type="submit" className="w-full">
-//               Save & Continue
-//             </Button>
-//           </form>
-//         </CardContent>
-//       </Card>
-//     </div>
-//   );
-// }
+      {loading || !user ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center text-white bg-black/50">
+          Loading your profile...
+        </div>
+      ) : (
+        <ModalWrapper onClose={() => router.push('/')}>
+          <div className="flex justify-center items-center py-6">
+            <Image src="/logoinkara.png" alt="Logo" width={120} height={40} />
+          </div>
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold">Welcome, {user.name}!</h1>
+            <p className="text-gray-300">Let's complete your profile to get started.</p>
+          </div>
+          <ProfileCompletionStepper initialData={{ name: user.name, email: user.email }} />
+        </ModalWrapper>
+      )}
+    </div>
+  );
+}
