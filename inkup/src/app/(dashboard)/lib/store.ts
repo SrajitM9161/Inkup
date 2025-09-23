@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Tool, ModelType } from "../components/types/tool";
 import type { Bookmark } from "../components/types/bookmark";
+import { IBrush } from "../components/types/brush"; 
+import { defaultBrush } from "./brushes";
 
 /* -------------------- Types -------------------- */
 export interface OutputImage {
@@ -46,6 +48,10 @@ interface ToolState {
   penColor: string;
   generatedItems: string[];
 
+  /* Brush Engine State */
+  canvasMode: boolean;
+  brush: IBrush;
+
   /* Actions */
   setUserImage: (img: string | null) => void;
   setUploadedFile: (file: File | null) => void;
@@ -77,6 +83,10 @@ interface ToolState {
 
   reset: () => void;
   clearPersistedImages: () => void;
+
+  /* Brush Engine Actions */
+  setCanvasMode: (val: boolean) => void;
+  setBrush: (brush: IBrush) => void;
 }
 
 interface EditToolState {
@@ -117,6 +127,10 @@ export const useToolStore = create<ToolState>((set) => ({
   maskOpacity: 1,
   penColor: "#ff0000",
   generatedItems: [],
+
+  /* Brush Engine State */
+  canvasMode: false,
+  brush: defaultBrush,
 
   /* Actions */
   setUserImage: (img) => set({ userImage: img }),
@@ -179,6 +193,8 @@ export const useToolStore = create<ToolState>((set) => ({
       maskOpacity: 1,
       penColor: "#ff0000",
       generatedItems: [],
+      canvasMode: false,
+      brush: defaultBrush,
     }),
 
   clearPersistedImages: () => {
@@ -187,6 +203,10 @@ export const useToolStore = create<ToolState>((set) => ({
       localStorage.removeItem("tool-store");
     }
   },
+  
+  /* Brush Engine Actions */
+  setCanvasMode: (val) => set({ canvasMode: val }),
+  setBrush: (brush) => set({ brush: brush }),
 }));
 
 /* -------------------- Edit Tool Store (Persisted) -------------------- */
