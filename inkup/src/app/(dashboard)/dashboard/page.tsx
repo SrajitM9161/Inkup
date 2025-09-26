@@ -15,7 +15,6 @@ import CatalogSidebar from '../components/Sidebar/CatalogSidebar';
 import ProtectedRoute from './ProtectedRoute';
 import { generateTryonImage } from '../../api/api';
 import TokenHandler from '../../components/TokenHandler';
-// Import the new layout component
 import BrushModeLayout from '../components/canvas/BrushModeLayout';
 
 export default function DashboardPage() {
@@ -36,7 +35,6 @@ export default function DashboardPage() {
   const { addResultImage } = useEditToolStore();
   
   const handleGenerate = async () => {
-    // This function remains unchanged
     if (!userImage || !itemImage) {
       toast.error('Upload both human and tattoo images first!');
       return;
@@ -109,7 +107,6 @@ export default function DashboardPage() {
             </button>
           </div>
           
-          {/* Main content area for default tools */}
           <main className="flex-grow overflow-auto flex flex-col items-center justify-center p-6">
             {!userImage ? (
               <div className="text-center">
@@ -120,16 +117,12 @@ export default function DashboardPage() {
                 </p>
               </div>
             ) : (
-              // This container now ONLY shows when you are NOT in brush mode.
               <div className="flex flex-col items-center gap-4 shrink-0">
                 <CanvasWrapper canvasRef={canvasRef} />
               </div>
             )}
           </main>
           
-          {/* **THE SOLUTION** */}
-          {/* Render the dedicated full-screen layout when canvasMode is true. */}
-          {/* This works even if `userImage` is null. */}
           {canvasMode && <BrushModeLayout />}
           
           <BottomBar

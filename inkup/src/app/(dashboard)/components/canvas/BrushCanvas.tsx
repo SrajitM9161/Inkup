@@ -53,7 +53,6 @@ export default function BrushCanvas() {
       const drawingTexture = RenderTexture.create({
         width: app.screen.width,
         height: app.screen.height,
-        // ✅ FIX: Using the modern string literal for alphaMode
         alphaMode: 'premultiplied-alpha',
       });
       drawingTextureRef.current = drawingTexture;
@@ -115,7 +114,6 @@ export default function BrushCanvas() {
           
           if (type === 'eraser') {
             dab.tint = 0xFFFFFF;
-            // ✅ FIX: Using the modern string literal for blend modes
             dab.blendMode = 'erase';
           } else {
             dab.tint = nColor;

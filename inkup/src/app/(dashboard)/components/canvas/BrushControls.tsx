@@ -1,29 +1,24 @@
-// app/(dashboard)/components/canvas/BrushControls.tsx
 'use client';
 import { useToolStore } from '../../lib/store';
-// Import the new eraserBrush
 import { charcoalBrush, inkPenBrush, airbrushBrush, markerBrush, eraserBrush } from '../../lib/brushes';
 import { IBrush } from '../types/brush';
-// Add Eraser icon
 import { Pen, Brush, SprayCan, Highlighter, Eraser as EraserIcon } from 'lucide-react';
 
-// A map to associate brush names with icons for a better UI
 const brushIcons: { [key: string]: React.ReactNode } = {
   "Ink Pen": <Pen size={24} />,
   "Marker": <Highlighter size={24} />,
   "Charcoal": <Brush size={24} />,
   "Airbrush": <SprayCan size={24} />,
-  "Eraser": <EraserIcon size={24} />, // Add Eraser icon
+  "Eraser": <EraserIcon size={24} />, 
 };
 
 const BrushPreset = ({ brush, name }: { brush: IBrush; name: string }) => {
   const { setBrush, brush: currentBrush } = useToolStore();
   
-  // Check if the current preset is active
-  // Also compare 'type' to differentiate between pen and eraser for same size/color
+
   const isActive = currentBrush.color === brush.color && 
                    currentBrush.size === brush.size &&
-                   currentBrush.type === brush.type; // Check brush type for active state
+                   currentBrush.type === brush.type; 
 
   return (
     <div className="flex flex-col items-center gap-1.5 cursor-pointer" onClick={() => setBrush(brush)}>
@@ -53,19 +48,17 @@ export default function BrushControls() {
 
   return (
     <div className="w-full bg-[#1A1A1A] border border-[#333] rounded-xl shadow-md px-4 py-3 flex items-center justify-between gap-6">
-      {/* Left side: Brush Presets */}
       <div className="flex items-center gap-4">
         <p className="text-sm font-medium text-gray-400 pr-2 border-r border-gray-600">Presets</p>
         <BrushPreset brush={inkPenBrush} name="Ink Pen" />
         <BrushPreset brush={markerBrush} name="Marker" />
         <BrushPreset brush={charcoalBrush} name="Charcoal" />
         <BrushPreset brush={airbrushBrush} name="Airbrush" />
-        <BrushPreset brush={eraserBrush} name="Eraser" /> {/* Add the Eraser Preset */}
+        <BrushPreset brush={eraserBrush} name="Eraser" /> 
       </div>
       
-      {/* Right side: Sliders and Color Picker */}
+
       <div className="flex items-center gap-6">
-         {/* Size/Thickness Slider */}
          <div className="flex items-center gap-3">
             <label htmlFor="brush-size-slider" className="text-sm font-medium text-gray-400">Size</label>
             <input 
@@ -79,7 +72,6 @@ export default function BrushControls() {
             />
          </div>
 
-         {/* Color Picker - conditionally hide for eraser, as it doesn't apply */}
          {brush.type !== 'eraser' && (
            <div className="flex items-center gap-3">
               <label htmlFor="brush-color-picker" className="text-sm font-medium text-gray-400">Color</label>
