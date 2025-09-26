@@ -1,7 +1,7 @@
 import { IBrush } from '../components/types/brush';
 
 export const defaultBrush: IBrush = {
-  color: '#ffbe0c',
+  color: '#000000',
   size: 32,
   spacing: 0.15,
   speed: 0.62,
@@ -16,7 +16,7 @@ export const defaultBrush: IBrush = {
 
 export const charcoalBrush: IBrush = {
   ...defaultBrush,
-  color: '#333333',
+  color: '#000000',
   size: 40,
   spacing: 0.1,
   jitter: 0.5,
@@ -26,7 +26,7 @@ export const charcoalBrush: IBrush = {
 
 export const inkPenBrush: IBrush = {
   ...defaultBrush,
-  color: '#1a1a1a',
+  color: '#000000',
   size: 12,
   spacing: 0.1,
   speed: 0.8,
@@ -39,7 +39,7 @@ export const inkPenBrush: IBrush = {
 
 export const airbrushBrush: IBrush = {
   ...defaultBrush,
-  color: '#00aaff',
+  color: '#000000',
   size: 60,
   spacing: 0.05,
   speed: 0.5,
@@ -52,7 +52,7 @@ export const airbrushBrush: IBrush = {
 
 export const markerBrush: IBrush = {
   ...defaultBrush,
-  color: '#ff0066',
+  color: '#000000',
   size: 25,
   spacing: 0.12,
   speed: 0.7,
@@ -67,7 +67,7 @@ export const markerBrush: IBrush = {
 export const eraserBrush: IBrush = {
   ...defaultBrush, 
   type: 'eraser',
-  color: '#FFFFFF',
+  color: '#000000',
   size: 30,
   alpha: 1,
   jitter: 0.2,
