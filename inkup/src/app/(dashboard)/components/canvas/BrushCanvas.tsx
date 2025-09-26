@@ -1,6 +1,15 @@
 'use client';
 import React, { useEffect, useRef } from 'react';
-import * as PIXI from 'pixi.js';
+import {
+  Application,
+  RenderTexture,
+  Sprite,
+  Container,
+  Color,
+  AlphaFilter,
+  FederatedPointerEvent,
+  Texture,
+} from 'pixi.js';
 import { useToolStore } from '../../lib/store';
 import { IBrush } from '../types/brush';
 import { lerp, lerpPoints } from '../utils/brushUtils';
@@ -8,7 +17,9 @@ import { defaultBrush } from '../../lib/brushes';
 
 export default function BrushCanvas() {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const appRef = useRef<PIXI.Application | null>(null);
+  const appRef = useRef<Application | null>(null);
+  const drawingTextureRef = useRef<RenderTexture | null>(null);
+  const drawingSpriteRef = useRef<Sprite | null>(null);
 
   useEffect(() => {
     const container = canvasContainerRef.current;
@@ -16,7 +27,7 @@ export default function BrushCanvas() {
       return;
     }
 
-    let app: PIXI.Application;
+    let app: Application;
     let resizeObserver: ResizeObserver;
 
     const setupPixiApp = async () => {
@@ -25,7 +36,7 @@ export default function BrushCanvas() {
         return;
       }
 
-      app = new PIXI.Application();
+      app = new Application();
       await app.init({
         width: container.clientWidth,
         height: container.clientHeight,
@@ -39,30 +50,37 @@ export default function BrushCanvas() {
       appRef.current = app;
       container.appendChild(app.canvas);
 
-      const prevSurface = new PIXI.Graphics();
-      app.stage.addChild(prevSurface);
-      const currSurface = new PIXI.Graphics();
-      app.stage.addChild(currSurface);
+      const drawingTexture = RenderTexture.create({
+        width: app.screen.width,
+        height: app.screen.height,
+        // ✅ FIX: Using the modern string literal for alphaMode
+        alphaMode: 'premultiplied-alpha',
+      });
+      drawingTextureRef.current = drawingTexture;
 
-      // --- **THE WORKING SOLUTION: USE A GUARANTEED VALID TEXTURE** ---
-      // This bypasses custom texture generation and is the most reliable method.
-      const brushTexture = PIXI.Texture.WHITE;
-      // --- End of Solution ---
+      const drawingSprite = new Sprite(drawingTexture);
+      drawingSpriteRef.current = drawingSprite;
+      app.stage.addChild(drawingSprite);
 
+      const brushStampContainer = new Container();
+      app.stage.addChild(brushStampContainer);
+
+      const brushTexture = Texture.WHITE;
       let pixiMark: ReturnType<typeof createPixiMark> | null = null;
       
       const createPixiMark = (initialBrush: IBrush) => {
         const brush: IBrush = { ...defaultBrush, ...initialBrush };
         const { color, opacity, alpha, size, streamline, variation, jitter, sizeJitter, speed, type, spacing } = brush;
-        const nColor = new PIXI.Color(color).toNumber();
+        const nColor = new Color(color).toNumber();
         let prev: number[];
         let error = 0;
         const pts: number[][] = [];
-        const markContainer = new PIXI.Container();
-        currSurface.addChild(markContainer);
+        
+        const currentMarkDabs = new Container();
+        brushStampContainer.addChild(currentMarkDabs);
 
         if (opacity < 1) {
-            markContainer.filters = [new PIXI.AlphaFilter({ alpha: opacity })];
+            currentMarkDabs.filters = [new AlphaFilter({ alpha: opacity })];
         }
 
         const addPoint = (curr: number[]) => {
@@ -91,35 +109,47 @@ export default function BrushCanvas() {
         };
 
         const drawPoint = ([x, y, r]: number[]) => {
-          // A safety check to prevent drawing if the radius is invalid
           if (isNaN(r) || r <= 0) return;
         
-          const dab = new PIXI.Sprite(brushTexture);
-          dab.tint = nColor;
+          const dab = new Sprite(brushTexture);
+          
+          if (type === 'eraser') {
+            dab.tint = 0xFFFFFF;
+            // ✅ FIX: Using the modern string literal for blend modes
+            dab.blendMode = 'erase';
+          } else {
+            dab.tint = nColor;
+            dab.blendMode = 'normal';
+          }
+
           dab.anchor.set(0.5);
           dab.x = x;
           dab.y = y;
-          // The size is controlled by width/height, since the base texture is 1x1
           dab.width = dab.height = r;
           dab.alpha = alpha;
-          markContainer.addChild(dab);
+          currentMarkDabs.addChild(dab);
         };
 
         const complete = () => {
           if (pts.length < 3 && pts.length > 0) { addPoint([...pts[pts.length - 1]]); }
-          currSurface.removeChild(markContainer);
-          prevSurface.addChild(markContainer);
+          
+          app.renderer.render({
+            target: drawingTexture,
+            container: currentMarkDabs,
+            clear: false,
+          });
+          brushStampContainer.removeChild(currentMarkDabs);
         };
 
         return { addPoint, complete };
       };
 
-      const onPointerDown = (e: PIXI.FederatedPointerEvent) => {
+      const onPointerDown = (e: FederatedPointerEvent) => {
         const point = e.getLocalPosition(app.stage);
         pixiMark = createPixiMark(useToolStore.getState().brush);
         pixiMark.addPoint([point.x, point.y, e.pressure || 0.5]);
       };
-      const onPointerMove = (e: PIXI.FederatedPointerEvent) => {
+      const onPointerMove = (e: FederatedPointerEvent) => {
         if (pixiMark) {
           const point = e.getLocalPosition(app.stage);
           pixiMark.addPoint([point.x, point.y, e.pressure || 0.5]);
@@ -141,8 +171,12 @@ export default function BrushCanvas() {
 
       resizeObserver = new ResizeObserver(entries => {
         const { width, height } = entries[0].contentRect;
-        if (app.renderer) {
+        if (app.renderer && drawingTextureRef.current && drawingSpriteRef.current) {
           app.renderer.resize(width, height);
+          
+          drawingTextureRef.current.resize(width, height);
+          drawingSpriteRef.current.width = width;
+          drawingSpriteRef.current.height = height;
         }
       });
       resizeObserver.observe(container);
@@ -157,6 +191,8 @@ export default function BrushCanvas() {
       if (appRef.current) {
         appRef.current.destroy(true, { children: true, texture: true });
         appRef.current = null;
+        drawingTextureRef.current = null;
+        drawingSpriteRef.current = null;
       }
       if (container) {
         container.innerHTML = '';

@@ -63,3 +63,14 @@ export const markerBrush: IBrush = {
   jitter: 0.02,
   sizeJitter: 0,
 };
+
+export const eraserBrush: IBrush = {
+  ...defaultBrush, 
+  type: 'eraser',
+  color: '#FFFFFF',
+  size: 30,
+  alpha: 1,
+  jitter: 0.2,
+  sizeJitter: 0.1,
+  spacing: 0.2,
+};

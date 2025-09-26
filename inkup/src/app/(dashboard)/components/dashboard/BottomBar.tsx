@@ -27,7 +27,11 @@ export default function BottomBar({
   const { canvasMode, setCanvasMode } = useToolStore();
 
   return (
-    <div className="fixed bottom-5 left-4 right-4 z-50 flex items-end justify-between gap-2 md:left-6 md:right-6 lg:left-6 lg:right-96">
+    <div className={`fixed bottom-5 z-50 flex items-end gap-2 
+      ${canvasMode 
+        ? 'left-0 right-0 px-5' // Full-width with padding
+        : 'left-4 right-4 md:left-6 md:right-6 lg:left-6 lg:right-96'}` // Original constrained layout
+    }>
       <div className="flex-grow">
         {canvasMode ? (
           <BrushControls />
@@ -49,7 +53,6 @@ export default function BottomBar({
         )}
       </div>
 
-      {/* This button appears only in brush mode to exit */}
       {canvasMode && (
          <div className="shrink-0">
             <button

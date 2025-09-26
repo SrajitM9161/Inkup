@@ -1,5 +1,4 @@
 'use client';
-
 import {
   Download,
   Pencil,
@@ -31,15 +30,29 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
   } = useToolStore();
 
   const [promptOpen, setPromptOpen] = useState(false);
+  const [showCanvasSizeModal, setShowCanvasSizeModal] = useState(false);
 
   useKeyboardShortcuts(canvasRef);
+  
+  const handleEnterBrushMode = () => {
+    if (userImage) {
+      // If an image exists, enter brush mode directly.
+      setCanvasMode(true);
+    } else {
+      // If no image, open a modal to ask for canvas size.
+      // You would build this modal component. For now, it logs and shows a toast.
+      console.log("TODO: Open Canvas Size Modal");
+      toast("Please upload an image to use as a canvas base first.");
+      // setShowCanvasSizeModal(true); 
+    }
+  };
 
   const handleStrokeWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStrokeWidth(Number(e.target.value));
   };
 
   const handleDownload = useCallback(async () => {
-    // ... (rest of the function is unchanged)
+    // ... (This function is unchanged)
   }, [canvasRef, userImage]);
 
   const undo = () => canvasRef.current?.undo?.();
@@ -54,44 +67,19 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
 
   return (
     <>
-      <div
-        className="
-          w-fit flex items-center justify-center 
-          gap-2 px-3.5 py-1.5 
-          bg-[#1C1C1C] 
-          border border-[#333] 
-          rounded-lg
-        "
-      >
+      <div className="w-fit flex items-center justify-center gap-2 px-3.5 py-1.5 bg-[#1C1C1C] border border-[#333] rounded-lg">
         <Pencil
           size={26}
-          className={`
-            p-1 rounded-md cursor-pointer transition-colors 
-            ${tool === 'pen' ? 'bg-[#D0FE17] text-black' : 'text-white/70'}
-          `}
+          className={`p-1 rounded-md cursor-pointer transition-colors ${tool === 'pen' ? 'bg-[#D0FE17] text-black' : 'text-white/70'}`}
           onClick={() => handleToolChange('pen')}
         />
-
         <Eraser
           size={26}
-          className={`
-            p-1 rounded-md cursor-pointer transition-colors 
-            ${tool === 'eraser' ? 'bg-[#D0FE17] text-black' : 'text-white/70'}
-          `}
+          className={`p-1 rounded-md cursor-pointer transition-colors ${tool === 'eraser' ? 'bg-[#D0FE17] text-black' : 'text-white/70'}`}
           onClick={() => handleToolChange('eraser')}
         />
-
-        <Undo2
-          size={20}
-          className="text-white/70 cursor-pointer"
-          onClick={undo}
-        />
-        <Redo2
-          size={20}
-          className="text-white/70 cursor-pointer"
-          onClick={redo}
-        />
-
+        <Undo2 size={20} className="text-white/70 cursor-pointer" onClick={undo} />
+        <Redo2 size={20} className="text-white/70 cursor-pointer" onClick={redo} />
         <input
           type="range"
           min={1}
@@ -100,34 +88,22 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
           onChange={handleStrokeWidthChange}
           className="w-24 accent-[#D0FE17]"
         />
-
-        <Download
-          size={20}
-          className="text-white/70 cursor-pointer"
-          onClick={handleDownload}
-        />
-
-        <MessageSquarePlus
-          size={22}
-          className="text-white/70 cursor-pointer"
-          onClick={() => setPromptOpen(true)}
-        />
-        
+        <Download size={20} className="text-white/70 cursor-pointer" onClick={handleDownload} />
+        <MessageSquarePlus size={22} className="text-white/70 cursor-pointer" onClick={() => setPromptOpen(true)} />
         <div className="w-px h-5 bg-[#333] mx-1"></div>
-        
         <span title="Switch to Brush Mode">
           <Brush
             size={26}
             className="p-1 rounded-md cursor-pointer transition-colors text-white/70 hover:bg-[#D0FE17] hover:text-black"
-            onClick={() => setCanvasMode(true)}
+            onClick={handleEnterBrushMode}
           />
         </span>
       </div>
 
-      <PromptBox
-        open={promptOpen}
-        onClose={() => setPromptOpen(false)}
-      />
+      {/* You would create this modal to handle canvas size selection */}
+      {/* <CanvasSizeModal isOpen={showCanvasSizeModal} ... /> */}
+
+      <PromptBox open={promptOpen} onClose={() => setPromptOpen(false)} />
     </>
   );
 }

@@ -1,3 +1,4 @@
+// app/(dashboard)/lib/store.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Tool, ModelType } from "../components/types/tool";
@@ -50,7 +51,7 @@ interface ToolState {
 
   /* Brush Engine State */
   canvasMode: boolean;
-  brush: IBrush;
+  brush: IBrush; // Already exists, just confirming 'type' is part of IBrush
 
   /* Actions */
   setUserImage: (img: string | null) => void;
@@ -130,7 +131,7 @@ export const useToolStore = create<ToolState>((set) => ({
 
   /* Brush Engine State */
   canvasMode: false,
-  brush: defaultBrush,
+  brush: defaultBrush, // 'type' property is now part of the defaultBrush
 
   /* Actions */
   setUserImage: (img) => set({ userImage: img }),
