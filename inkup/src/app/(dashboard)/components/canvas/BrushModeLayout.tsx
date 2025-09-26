@@ -4,31 +4,28 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useToolStore } from '../../lib/store';
 import BrushCanvas from './BrushCanvas';
-import { Download, Save, MessageSquarePlus } from 'lucide-react';
+import BrushControls from './BrushControls';
+import { Download, Save, MessageSquarePlus, X } from 'lucide-react';
 import PromptBox from '../prompt/PromptBox';
 
 export default function BrushModeLayout() {
-  const { userImage } = useToolStore();
+  const { userImage, setCanvasMode } = useToolStore();
   const [promptOpen, setPromptOpen] = useState(false);
 
   const handleExport = () => {
-    // This functionality requires passing the Pixi app instance up from BrushCanvas.
-    // For now, this is a placeholder.
     console.log("Exporting image...");
     toast.success("Export function is not yet connected.");
   };
 
   const handleSave = () => {
-    // This would also need the Pixi app instance to get the image data.
     console.log("Saving to generations...");
     toast.success("Save function is not yet connected.");
   };
 
   return (
-    <div className="fixed inset-0 z-40 bg-[#181818]">
-      {/* Top Bar for Canvas Mode Controls */}
-      <div className="absolute top-5 left-5 z-50 flex items-center gap-2">
-        <button
+    <div className="fixed inset-0 z-40 bg-[#181818] flex flex-col">
+      <div className="absolute top-5 left-5 z-20 flex items-center gap-2">
+         <button
           onClick={handleExport}
           className="flex items-center gap-2 px-3 py-2 bg-[#1A1A1A] border border-[#333] text-white rounded-lg hover:bg-[#D0FE17] hover:text-black transition"
           title="Export Image"
@@ -53,21 +50,38 @@ export default function BrushModeLayout() {
         </button>
       </div>
 
-      {userImage && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <img
-            src={userImage}
-            alt="Drawing Reference"
-            className="max-w-full max-h-full object-contain"
-          />
-        </div>
-      )}
-
-      <div className="absolute inset-0">
-        <BrushCanvas />
+      <div className="absolute top-5 right-5 z-20">
+        <button
+          onClick={() => setCanvasMode(false)}
+          className="flex items-center justify-center p-2 bg-[#1A1A1A] border border-[#333] text-white rounded-full hover:bg-red-500/80 hover:border-red-400 transition"
+          title="Close Canvas Mode"
+        >
+          <X size={20} />
+        </button>
       </div>
 
-      {/* Renders the PromptBox when triggered */}
+      <div className="relative flex-1 min-h-0">
+        {userImage && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+            <img
+              src={userImage}
+              alt="Drawing Reference"
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
+        )}
+        
+        <BrushCanvas />
+      </div>
+      
+      <div className="w-full px-5 pb-5 shrink-0 z-10">
+        <div className="flex items-end gap-2">
+          <div className="flex-grow">
+            <BrushControls />
+          </div>
+        </div>
+      </div>
+
       <PromptBox open={promptOpen} onClose={() => setPromptOpen(false)} />
     </div>
   );

@@ -125,14 +125,16 @@ export default function DashboardPage() {
           
           {canvasMode && <BrushModeLayout />}
           
-          <BottomBar
-            onUploadClick={() => setUploadModalOpen(true)}
-            onUploadItemClick={() => setItemUploadModalOpen(true)}
-            onGenerate={handleGenerate}
-            isGenerating={isGenerating ?? false}
-            canvasRef={canvasRef}
-            disableGenerate={!userImage || !itemImage}
-          />
+          {!canvasMode && (
+            <BottomBar
+              onUploadClick={() => setUploadModalOpen(true)}
+              onUploadItemClick={() => setItemUploadModalOpen(true)}
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating ?? false}
+              canvasRef={canvasRef}
+              disableGenerate={!userImage || !itemImage}
+            />
+          )}
         </div>
       </div>
     </ProtectedRoute>

@@ -49,6 +49,14 @@ export default function BrushCanvas() {
 
       appRef.current = app;
       container.appendChild(app.canvas);
+      
+      const background = new Sprite(Texture.WHITE);
+      background.width = app.screen.width;
+      background.height = app.screen.height;
+      background.alpha = 0;
+      background.eventMode = 'static';
+      app.stage.addChild(background);
+
 
       const drawingTexture = RenderTexture.create({
         width: app.screen.width,
@@ -159,19 +167,20 @@ export default function BrushCanvas() {
           pixiMark = null;
         }
       };
-
-      app.stage.eventMode = 'static';
-      app.stage.hitArea = app.screen;
-      app.stage.on('pointerdown', onPointerDown);
-      app.stage.on('pointermove', onPointerMove);
-      app.stage.on('pointerup', onPointerUp);
-      app.stage.on('pointerupoutside', onPointerUp);
+      
+      background.on('pointerdown', onPointerDown);
+      background.on('pointermove', onPointerMove);
+      background.on('pointerup', onPointerUp);
+      background.on('pointerupoutside', onPointerUp);
 
       resizeObserver = new ResizeObserver(entries => {
         const { width, height } = entries[0].contentRect;
         if (app.renderer && drawingTextureRef.current && drawingSpriteRef.current) {
           app.renderer.resize(width, height);
           
+          background.width = width;
+          background.height = height;
+
           drawingTextureRef.current.resize(width, height);
           drawingSpriteRef.current.width = width;
           drawingSpriteRef.current.height = height;
@@ -198,5 +207,5 @@ export default function BrushCanvas() {
     };
   }, []);
 
-  return <div ref={canvasContainerRef} className="w-full h-full" />;
+  return <div ref={canvasContainerRef} className="absolute inset-0" />;
 }
