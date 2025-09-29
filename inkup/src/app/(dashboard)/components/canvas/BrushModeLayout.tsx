@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useToolStore } from '../../lib/store';
 import BrushCanvas from './BrushCanvas';
@@ -11,6 +11,33 @@ import PromptBox from '../prompt/PromptBox';
 export default function BrushModeLayout() {
   const { userImage, setCanvasMode } = useToolStore();
   const [promptOpen, setPromptOpen] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [imageRect, setImageRect] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (imageRef.current) {
+        setImageRect(imageRef.current.getBoundingClientRect());
+      }
+    };
+
+    const observer = new ResizeObserver(handleResize);
+    if (imageRef.current) {
+      observer.observe(imageRef.current);
+    }
+    
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      if (imageRef.current) {
+        observer.unobserve(imageRef.current);
+      }
+      observer.disconnect();
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [userImage]);
 
   const handleExport = () => {
     console.log("Exporting image...");
@@ -64,14 +91,20 @@ export default function BrushModeLayout() {
         {userImage && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
             <img
+              ref={imageRef}
               src={userImage}
               alt="Drawing Reference"
               className="max-w-full max-h-full object-contain"
+              onLoad={() => {
+                if (imageRef.current) {
+                  setImageRect(imageRef.current.getBoundingClientRect());
+                }
+              }}
             />
           </div>
         )}
         
-        <BrushCanvas />
+        {imageRect && <BrushCanvas imageRect={imageRect} />}
       </div>
       
       <div className="w-full px-5 pb-5 shrink-0 z-10">

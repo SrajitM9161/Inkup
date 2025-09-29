@@ -15,7 +15,11 @@ import { IBrush } from '../types/brush';
 import { lerp, lerpPoints } from '../utils/brushUtils';
 import { defaultBrush } from '../../lib/brushes';
 
-export default function BrushCanvas() {
+interface BrushCanvasProps {
+  imageRect: DOMRect;
+}
+
+export default function BrushCanvas({ imageRect }: BrushCanvasProps) {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const drawingTextureRef = useRef<RenderTexture | null>(null);
@@ -28,18 +32,18 @@ export default function BrushCanvas() {
     }
 
     let app: Application;
-    let resizeObserver: ResizeObserver;
 
     const setupPixiApp = async () => {
-      if (container.clientWidth === 0 || container.clientHeight === 0) {
-        requestAnimationFrame(setupPixiApp);
+      const { width, height, x, y } = imageRect;
+      
+      if (width === 0 || height === 0) {
         return;
       }
 
       app = new Application();
       await app.init({
-        width: container.clientWidth,
-        height: container.clientHeight,
+        width: width,
+        height: height,
         backgroundColor: 0x000000,
         backgroundAlpha: 0,
         antialias: true,
@@ -48,6 +52,12 @@ export default function BrushCanvas() {
       });
 
       appRef.current = app;
+      
+      container.style.width = `${width}px`;
+      container.style.height = `${height}px`;
+      container.style.left = `${x}px`;
+      container.style.top = `${y}px`;
+
       container.appendChild(app.canvas);
       
       const background = new Sprite(Texture.WHITE);
@@ -172,29 +182,11 @@ export default function BrushCanvas() {
       background.on('pointermove', onPointerMove);
       background.on('pointerup', onPointerUp);
       background.on('pointerupoutside', onPointerUp);
-
-      resizeObserver = new ResizeObserver(entries => {
-        const { width, height } = entries[0].contentRect;
-        if (app.renderer && drawingTextureRef.current && drawingSpriteRef.current) {
-          app.renderer.resize(width, height);
-          
-          background.width = width;
-          background.height = height;
-
-          drawingTextureRef.current.resize(width, height);
-          drawingSpriteRef.current.width = width;
-          drawingSpriteRef.current.height = height;
-        }
-      });
-      resizeObserver.observe(container);
     };
 
     setupPixiApp();
 
     return () => {
-      if (resizeObserver && container) {
-        resizeObserver.unobserve(container);
-      }
       if (appRef.current) {
         appRef.current.destroy(true, { children: true, texture: true });
         appRef.current = null;
@@ -202,10 +194,12 @@ export default function BrushCanvas() {
         drawingSpriteRef.current = null;
       }
       if (container) {
-        container.innerHTML = '';
+        while (container.firstChild) {
+          container.removeChild(container.firstChild);
+        }
       }
     };
-  }, []);
+  }, [imageRect]);
 
-  return <div ref={canvasContainerRef} className="absolute inset-0" />;
+  return <div ref={canvasContainerRef} className="absolute z-10" />;
 }
