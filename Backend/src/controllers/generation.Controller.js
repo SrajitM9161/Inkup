@@ -3,6 +3,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import ApiResponseHandler from '../utils/apiResponseHandler.js';
 import ApiErrorHandler from '../utils/apiErrorHandler.js';
 import prisma from '../../prisma/prismaClient.js';
+import { cleanupFiles } from '../utils/cleanupFilesHandler.js';
 
 export const uploadUserImage = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -12,16 +13,15 @@ export const uploadUserImage = asyncHandler(async (req, res) => {
 
   const url = await uploadImageToCloudinary(file.path);
 
- const generation = await prisma.generation.create({
-  data: {
-    user: {
-      connect: { id: userId },
-
+  const generation = await prisma.generation.create({
+    data: {
+      user: {
+        connect: { id: userId },
+      },
+      userImageUrl: url,
+      status: 'PENDING',
     },
-    userImageUrl: url,
-    status: 'PENDING',
-  },
-});
+  });
 
   return new ApiResponseHandler(200, 'User image uploaded', { generationId: generation.id }).send(res);
 });
@@ -56,9 +56,53 @@ export const uploadItemImage = asyncHandler(async (req, res) => {
     });
   }
 
-
   return new ApiResponseHandler(200, 'Item image uploaded & generation started', {
     generationId: generation.id,
     assetId: asset.id,
   }).send(res);
+});
+
+export const saveUserGeneration = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  if (!req.file) {
+    throw new ApiErrorHandler(400, 'Image file is required.');
+  }
+
+  const localFilePath = req.file.path;
+  
+  try {
+    const cloudinaryUrl = await uploadImageToCloudinary(localFilePath);
+    if (!cloudinaryUrl) {
+      throw new ApiErrorHandler(500, "Failed to upload image to cloud storage.");
+    }
+
+    const generation = await prisma.generation.create({
+      data: {
+        userId,
+        status: 'COMPLETED',
+        userImageUrl: cloudinaryUrl,
+      },
+    });
+
+    const asset = await prisma.generationAsset.create({
+      data: {
+        generationId: generation.id,
+        outputImageUrl: cloudinaryUrl,
+      },
+    });
+
+    new ApiResponseHandler(201, "Generation saved successfully", {
+      generationId: generation.id,
+      assetId: asset.id,
+      imageUrl: asset.outputImageUrl,
+    }).send(res);
+
+  } catch (error) {
+    throw error;
+  } finally {
+    if (localFilePath) {
+      await cleanupFiles([localFilePath]);
+    }
+  }
 });

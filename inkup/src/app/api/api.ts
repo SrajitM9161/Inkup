@@ -141,7 +141,6 @@ export const editImages = async (prompt: string, images: string[]) => {
   return res.data;
 };
 
-// ✅ Fetch user's edit output images
 export const getUserEditOutputs = async (page = 1, limit = 20) => {
   const res = await api.get(`/api/user/outputs/edit?page=${page}&limit=${limit}`, {
     withCredentials: true,
@@ -149,7 +148,27 @@ export const getUserEditOutputs = async (page = 1, limit = 20) => {
   return res.data;
 };
 
+const base64ToFile = async (dataUrl: string, filename: string): Promise<File> => {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: blob.type });
+};
 
+
+export const uploadGeneration = async (imageBase64: string): Promise<any> => {
+  const imageFile = await base64ToFile(imageBase64, 'generation.png');
+
+  const formData = new FormData();
+
+  formData.append('generation', imageFile); 
+
+  const response = await api.post('/api/user/generations', formData, {
+    withCredentials: true,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+  return response.data;
+};
 
 export default api;
 

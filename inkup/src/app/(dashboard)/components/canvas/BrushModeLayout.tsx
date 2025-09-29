@@ -7,6 +7,7 @@ import BrushCanvas, { BrushCanvasHandle, ExportMethod } from './BrushCanvas';
 import BrushControls from './BrushControls';
 import { Download, Save, MessageSquarePlus, X } from 'lucide-react';
 import PromptBox from '../prompt/PromptBox';
+import { uploadGeneration } from '../../../api/api'; 
 
 export default function BrushModeLayout() {
   const { userImage, setCanvasMode } = useToolStore();
@@ -14,6 +15,7 @@ export default function BrushModeLayout() {
   const imageRef = useRef<HTMLImageElement>(null);
   const brushCanvasRef = useRef<BrushCanvasHandle>(null);
   const [imageRect, setImageRect] = useState<DOMRect | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -40,9 +42,32 @@ export default function BrushModeLayout() {
     }
   };
   
-  const handleSave = () => {
-    console.log('Saving to generations...');
-    toast.success('Save function is not yet connected.');
+  const handleSave = async () => {
+    if (!brushCanvasRef.current || isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+    toast.loading('Saving to your generations...');
+
+    try {
+      const imageBase64 = await brushCanvasRef.current.exportToBase64();
+
+      if (!imageBase64) {
+        throw new Error('Failed to get image data from canvas.');
+      }
+
+      await uploadGeneration(imageBase64);
+      
+      toast.dismiss();
+      toast.success('Successfully saved to generations!');
+    } catch (error) {
+      console.error('Save failed:', error);
+      toast.dismiss();
+      toast.error('Could not save the image.', { id: 'save-error-toast' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -58,10 +83,12 @@ export default function BrushModeLayout() {
         </button>
         <button
           onClick={handleSave}
-          className="flex items-center gap-2 px-3 py-2 bg-[#1A1A1A] border border-[#333] text-white rounded-lg hover:bg-[#D0FE17] hover:text-black transition"
+          disabled={isSaving}
+          className="flex items-center gap-2 px-3 py-2 bg-[#1A1A1A] border border-[#333] text-white rounded-lg hover:bg-[#D0FE17] hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
           title="Save to My Generations"
         >
           <Save size={20} />
+          <span>{isSaving ? 'Saving...' : 'Save'}</span>
         </button>
         <button
           onClick={() => setPromptOpen(true)}

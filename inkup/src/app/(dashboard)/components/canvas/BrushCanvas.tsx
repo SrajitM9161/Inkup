@@ -26,6 +26,7 @@ import {
   exportCanvasAsImageV2,
   exportCanvasSimple,
   downloadRenderTexture,
+  exportCanvasAsBase64, 
 } from '../utils/exportUtils';
 
 interface BrushCanvasProps {
@@ -37,6 +38,7 @@ export type ExportMethod = 'html' | 'pixi' | 'simple' | 'debug_layer';
 
 export interface BrushCanvasHandle {
   exportImage: (method: ExportMethod) => Promise<void>;
+  exportToBase64: () => Promise<string | null>;
 }
 
 const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
@@ -79,6 +81,25 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
           console.error(`Export failed with method: ${method}`, error);
         }
       },
+      async exportToBase64(): Promise<string | null> {
+        if (!appRef.current || !drawingTextureRef.current || !baseImageSrc) {
+          toast.error('Cannot export. Canvas not ready.');
+          return null;
+        }
+        try {
+          const base64 = await exportCanvasAsBase64(
+            baseImageSrc,
+            appRef.current,
+            drawingTextureRef.current,
+            'png'
+          );
+          return base64;
+        } catch (error) {
+          console.error("Failed to export to Base64", error);
+          toast.error("Could not prepare image for saving.");
+          return null;
+        }
+      }
     }));
 
     useEffect(() => {
