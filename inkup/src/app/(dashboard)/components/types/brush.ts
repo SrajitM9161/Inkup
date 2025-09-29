@@ -1,4 +1,5 @@
 export interface IBrush {
+  name: string;
   type: string;
   color: string;
   size: number;

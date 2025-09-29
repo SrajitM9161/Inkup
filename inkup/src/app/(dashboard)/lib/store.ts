@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import type { Tool, ModelType } from "../components/types/tool";
 import type { Bookmark } from "../components/types/bookmark";
 import { IBrush } from "../components/types/brush"; 
-import { defaultBrush } from "./brushes";
+import { sketchPencilBrush } from "./brushes";
 
 /* -------------------- Types -------------------- */
 export interface OutputImage {
@@ -50,7 +50,7 @@ interface ToolState {
 
   /* Brush Engine State */
   canvasMode: boolean;
-  brush: IBrush; // Already exists, just confirming 'type' is part of IBrush
+  brush: IBrush;
 
   /* Actions */
   setUserImage: (img: string | null) => void;
@@ -130,7 +130,7 @@ export const useToolStore = create<ToolState>((set) => ({
 
   /* Brush Engine State */
   canvasMode: false,
-  brush: defaultBrush, // 'type' property is now part of the defaultBrush
+  brush: sketchPencilBrush, 
 
   /* Actions */
   setUserImage: (img) => set({ userImage: img }),
@@ -194,7 +194,7 @@ export const useToolStore = create<ToolState>((set) => ({
       penColor: "#ff0000",
       generatedItems: [],
       canvasMode: false,
-      brush: defaultBrush,
+      brush: sketchPencilBrush, 
     }),
 
   clearPersistedImages: () => {
