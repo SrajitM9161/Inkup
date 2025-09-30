@@ -18,19 +18,25 @@ export default function BrushModeLayout() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    const imgElement = imageRef.current;
+    if (!imgElement) return;
+
     const handleResize = () => {
-      if (imageRef.current) {
-        setImageRect(imageRef.current.getBoundingClientRect());
-      }
+      setImageRect(imgElement.getBoundingClientRect());
     };
-    handleResize();
+
     const observer = new ResizeObserver(handleResize);
-    if (imageRef.current) observer.observe(imageRef.current);
-    window.addEventListener('resize', handleResize);
+    observer.observe(imgElement);
+
+    imgElement.addEventListener('load', handleResize);
+    
+    if (imgElement.complete) {
+      handleResize();
+    }
+
     return () => {
-      if (imageRef.current) observer.unobserve(imageRef.current);
       observer.disconnect();
-      window.removeEventListener('resize', handleResize);
+      imgElement.removeEventListener('load', handleResize);
     };
   }, [userImage]);
 
@@ -122,11 +128,6 @@ export default function BrushModeLayout() {
               src={userImage}
               alt="Drawing Reference"
               className="max-w-full max-h-full object-contain"
-              onLoad={() => {
-                if (imageRef.current) {
-                  setImageRect(imageRef.current.getBoundingClientRect());
-                }
-              }}
             />
           </div>
         )}
