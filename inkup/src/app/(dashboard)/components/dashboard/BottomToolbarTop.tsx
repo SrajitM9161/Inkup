@@ -36,7 +36,6 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
   
   const handleEnterBrushMode = () => {
     if (userImage) {
-      // If an image exists, enter brush mode directly.
       setCanvasMode(true);
     } else {
       // If no image, open a modal to ask for canvas size.
@@ -52,7 +51,58 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
   };
 
   const handleDownload = useCallback(async () => {
-    // ... (This function is unchanged)
+    if (!canvasRef.current || !userImage) {
+      toast.error('Nothing to export');
+      return;
+    }
+
+    try {
+      const sketch = await canvasRef.current.exportImage('png');
+
+      const background = new Image();
+      const overlay = new Image();
+
+      background.crossOrigin = 'anonymous';
+      overlay.crossOrigin = 'anonymous';
+
+      background.src = userImage;
+      overlay.src = sketch;
+
+      await Promise.all([
+        new Promise((res, rej) => {
+          background.onload = res;
+          background.onerror = rej;
+        }),
+        new Promise((res, rej) => {
+          overlay.onload = res;
+          overlay.onerror = rej;
+        }),
+      ]);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = background.width;
+      canvas.height = background.height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        toast.error('Canvas context error');
+        return;
+      }
+
+      ctx.drawImage(background, 0, 0);
+      ctx.drawImage(overlay, 0, 0);
+
+      const finalImage = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = finalImage;
+      a.download = 'InkaraAI.png';
+      a.click();
+
+      toast.success('Downloaded!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Download failed (CORS issue or image load error)');
+    }
   }, [canvasRef, userImage]);
 
   const undo = () => canvasRef.current?.undo?.();
@@ -100,7 +150,6 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
         </span>
       </div>
 
-      {/* You would create this modal to handle canvas size selection */}
       {/* <CanvasSizeModal isOpen={showCanvasSizeModal} ... /> */}
 
       <PromptBox open={promptOpen} onClose={() => setPromptOpen(false)} />

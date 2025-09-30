@@ -35,7 +35,6 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
 
   useEffect(() => {
     const src = latest ?? userImage ?? null;
-
     if (!src) {
       setDisplayImage(null);
       shownRef.current = null;
@@ -45,7 +44,6 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
 
     if (src !== shownRef.current) {
       setImageLoaded(false);
-      
       const img = new Image();
       img.onload = () => {
         const stillRelevantSrc = useEditToolStore.getState().resultImages.slice(-1)[0] ?? useToolStore.getState().userImage;
@@ -66,6 +64,14 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
     }
   }, [userImage, latest, setIsGenerating]);
 
+  useEffect(() => {
+
+    if (userImage) {
+        if (latest && latest !== userImage) {
+            clearImages();
+        }
+    }
+  }, [userImage, latest, clearImages]);
 
   const handleClearAll = () => {
     canvasRef.current?.resetCanvas()
@@ -150,6 +156,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
           </div>
         )}
       </div>
+      
       {isFullscreen && displayImage && (
         <div className="fixed inset-0 z-[1000] bg-black/90 flex items-center justify-center p-4">
           <div className="relative w-full h-full flex items-center justify-center">
