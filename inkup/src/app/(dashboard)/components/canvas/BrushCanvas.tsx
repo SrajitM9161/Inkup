@@ -5,6 +5,7 @@ import React, {
   useRef,
   forwardRef,
   useImperativeHandle,
+  useState,
 } from 'react';
 import {
   Application,
@@ -46,6 +47,9 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const appRef = useRef<Application | null>(null);
     const drawingTextureRef = useRef<RenderTexture | null>(null);
+    const drawingSpriteRef = useRef<Sprite | null>(null);
+    const [reinitTrigger, setReinitTrigger] = useState(0);
+    const hasReinitialized = useRef(false);
 
     useImperativeHandle(ref, () => ({
       async exportImage(method: ExportMethod) {
@@ -113,23 +117,64 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
         if (width === 0 || height === 0) return;
 
         app = new Application();
-        await app.init({ width, height, backgroundColor: 0x000000, backgroundAlpha: 0, antialias: true, autoDensity: true, resolution: window.devicePixelRatio || 1 });
+        await app.init({ 
+          width, 
+          height, 
+          backgroundColor: 0x000000, 
+          backgroundAlpha: 0, 
+          antialias: true, 
+          autoDensity: true, 
+          resolution: window.devicePixelRatio || 1 
+        });
+        
         appRef.current = app;
-        container.style.width = `${width}px`; container.style.height = `${height}px`; container.style.left = `${x}px`; container.style.top = `${y}px`;
+        
+        container.style.width = `${width}px`; 
+        container.style.height = `${height}px`; 
+        container.style.left = `${x}px`; 
+        container.style.top = `${y}px`;
         container.appendChild(app.canvas);
         
         const background = new Sprite(Texture.WHITE);
-        background.width = app.screen.width; background.height = app.screen.height; background.alpha = 0; background.eventMode = 'static';
+        background.width = app.screen.width; 
+        background.height = app.screen.height; 
+        background.alpha = 0; 
+        background.eventMode = 'static';
         app.stage.addChild(background);
 
-        const drawingTexture = RenderTexture.create({ width: app.screen.width, height: app.screen.height, alphaMode: 'premultiplied-alpha' });
+        const drawingTexture = RenderTexture.create({ 
+          width: app.screen.width, 
+          height: app.screen.height, 
+          alphaMode: 'premultiplied-alpha' 
+        });
         drawingTextureRef.current = drawingTexture;
 
         const drawingSprite = new Sprite(drawingTexture);
+        drawingSpriteRef.current = drawingSprite;
         app.stage.addChild(drawingSprite);
         
         const brushStampContainer = new Container();
         app.stage.addChild(brushStampContainer);
+
+        if (!hasReinitialized.current && reinitTrigger === 0) {
+          hasReinitialized.current = true;
+          
+          setTimeout(() => {
+            if (appRef.current) {
+              appRef.current.destroy(true, { children: true, texture: true });
+              appRef.current = null;
+              drawingTextureRef.current = null;
+              drawingSpriteRef.current = null;
+            }
+            if (container) {
+              while (container.firstChild) {
+                container.removeChild(container.firstChild);
+              }
+            }
+            setReinitTrigger(1);
+          }, 100);
+          return;
+        }
 
         const brushTexture = Texture.WHITE;
         let pixiMark: ReturnType<typeof createPixiMark> | null = null;
@@ -138,7 +183,8 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
           const brush: IBrush = { ...defaultBrush, ...initialBrush };
           const { color, opacity, alpha, size, streamline, variation, jitter, sizeJitter, speed, type, spacing } = brush;
           const nColor = new Color(color).toNumber();
-          let prev: number[]; let error = 0;
+          let prev: number[]; 
+          let error = 0;
           const pts: number[][] = [];
           
           const currentMarkDabs = new Container();
@@ -153,7 +199,8 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
             if (!prev) { prev = [...curr]; drawPoint(prev); return; }
             let [x, y, p] = curr;
             const maxSize = size; const minSize = maxSize * (1 - variation);
-            x = lerp(prev[0], x, 1 - streamline); y = lerp(prev[1], y, 1 - streamline);
+            x = lerp(prev[0], x, 1 - streamline); 
+            y = lerp(prev[1], y, 1 - streamline);
             const dist = Math.hypot(x - prev[0], y - prev[1]);
             if (type !== 'pen') p = 1 - Math.min(1, dist / size);
             p = lerp(prev[2], p, speed);
@@ -176,7 +223,11 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
             const dab = new Sprite(brushTexture);
             dab.tint = type === 'eraser' ? 0xffffff : nColor;
             dab.blendMode = type === 'eraser' ? 'erase' : 'normal';
-            dab.anchor.set(0.5); dab.x = x; dab.y = y; dab.width = dab.height = r; dab.alpha = alpha;
+            dab.anchor.set(0.5); 
+            dab.x = x; 
+            dab.y = y; 
+            dab.width = dab.height = r; 
+            dab.alpha = alpha;
             currentMarkDabs.addChild(dab);
           };
 
@@ -185,19 +236,21 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
               addPoint([...pts[pts.length - 1]]);
             }
             
-            app.ticker.addOnce(() => {
-              if (drawingTextureRef.current) {
-                app.renderer.render({
-                  target: drawingTextureRef.current,
-                  container: currentMarkDabs,
-                  clear: false,
-                });
-              }
+            if (drawingTextureRef.current && appRef.current && drawingSpriteRef.current) {
+              app.renderer.render({
+                target: drawingTextureRef.current,
+                container: currentMarkDabs,
+                clear: false,
+              });
               
-              brushStampContainer.removeChild(currentMarkDabs);
-              currentMarkDabs.destroy({ children: true });
-            });
+              drawingSpriteRef.current.texture.update();
+              app.renderer.render(app.stage);
+            }
+            
+            brushStampContainer.removeChild(currentMarkDabs);
+            currentMarkDabs.destroy({ children: true });
           };
+          
           return { addPoint, complete };
         };
 
@@ -206,12 +259,14 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
           pixiMark = createPixiMark(useToolStore.getState().brush);
           pixiMark.addPoint([point.x, point.y, e.pressure || 0.5]);
         };
+        
         const onPointerMove = (e: FederatedPointerEvent) => {
           if (pixiMark) {
             const point = e.getLocalPosition(app.stage);
             pixiMark.addPoint([point.x, point.y, e.pressure || 0.5]);
           }
         };
+        
         const onPointerUp = () => {
           if (pixiMark) {
             pixiMark.complete();
@@ -224,16 +279,27 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
         background.on('pointerup', onPointerUp);
         background.on('pointerupoutside', onPointerUp);
       };
+      
       setupPixiApp();
 
       return () => {
-        if (appRef.current) { appRef.current.destroy(true, { children: true, texture: true }); appRef.current = null; drawingTextureRef.current = null; }
-        if (container) { while (container.firstChild) { container.removeChild(container.firstChild); } }
+        if (appRef.current) { 
+          appRef.current.destroy(true, { children: true, texture: true }); 
+          appRef.current = null; 
+          drawingTextureRef.current = null;
+          drawingSpriteRef.current = null;
+        }
+        if (container) { 
+          while (container.firstChild) { 
+            container.removeChild(container.firstChild); 
+          } 
+        }
       };
-    }, [imageRect]);
+    }, [imageRect, reinitTrigger]);
 
     return <div ref={canvasContainerRef} className="absolute z-10" />;
   }
 );
+
 BrushCanvas.displayName = 'BrushCanvas';
 export default BrushCanvas;
