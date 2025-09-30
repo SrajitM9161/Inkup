@@ -2,7 +2,6 @@ import { useCallback } from "react";
 import toast from "react-hot-toast";
 import { editImages } from "../../../../api/api";
 import { useEditToolStore, useToolStore } from "../../../lib/store";
-import { base64ToFile } from "./useFileUtils";
 
 const urlToBase64 = async (url: string): Promise<string> => {
   const response = await fetch(url);
@@ -23,7 +22,7 @@ export const usePromptSubmit = (
   displayImage: string | null
 ) => {
   const { setPrompt, addResultImage, clearImages } = useEditToolStore();
-  const { setIsGenerating } = useToolStore();
+  const { setIsGenerating, setUserImage } = useToolStore();
 
   const handleSubmit = useCallback(async () => {
     const sourceImage = displayImage;
@@ -67,6 +66,12 @@ export const usePromptSubmit = (
         const out = data?.data?.outputAssets;
         if (Array.isArray(out) && out.length) {
           out.forEach((asset: any) => addResultImage(asset.outputImageUrl));
+          
+          const newImageUrl = out[0]?.outputImageUrl;
+          if (newImageUrl) {
+            setUserImage(newImageUrl);
+          }
+
           return "Images generated successfully!";
         }
         throw new Error(data?.error || "Invalid response from server");
@@ -82,7 +87,7 @@ export const usePromptSubmit = (
     } finally {
       setIsGenerating(false);
     }
-  }, [promptInput, files, displayImage, onClose, setPrompt, setIsGenerating, clearImages, addResultImage]);
+  }, [promptInput, files, displayImage, onClose, setPrompt, setIsGenerating, setUserImage, clearImages, addResultImage]);
 
   return handleSubmit;
 };

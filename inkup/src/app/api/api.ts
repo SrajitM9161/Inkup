@@ -155,11 +155,18 @@ const base64ToFile = async (dataUrl: string, filename: string): Promise<File> =>
 };
 
 
-export const uploadGeneration = async (imageBase64: string): Promise<any> => {
+interface UploadGenerationResponse {
+  data: {
+    generationId: string;
+    assetId: string;
+    imageUrl: string;
+  }
+} 
+
+export const uploadGeneration = async (imageBase64: string): Promise<UploadGenerationResponse> => {
   const imageFile = await base64ToFile(imageBase64, 'generation.png');
 
   const formData = new FormData();
-
   formData.append('generation', imageFile); 
 
   const response = await api.post('/api/user/generations', formData, {

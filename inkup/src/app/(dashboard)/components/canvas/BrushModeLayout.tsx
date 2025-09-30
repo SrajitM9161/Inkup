@@ -10,7 +10,7 @@ import PromptBox from '../prompt/PromptBox';
 import { uploadGeneration } from '../../../api/api'; 
 
 export default function BrushModeLayout() {
-  const { userImage, setCanvasMode } = useToolStore();
+  const { userImage, setCanvasMode, setUserImage } = useToolStore();
   const [promptOpen, setPromptOpen] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
   const brushCanvasRef = useRef<BrushCanvasHandle>(null);
@@ -57,10 +57,15 @@ export default function BrushModeLayout() {
         throw new Error('Failed to get image data from canvas.');
       }
 
-      await uploadGeneration(imageBase64);
+      const response = await uploadGeneration(imageBase64);
       
       toast.dismiss();
       toast.success('Successfully saved to generations!');
+
+      if (response.data && response.data.imageUrl) {
+        setUserImage(response.data.imageUrl);
+      }
+
     } catch (error) {
       console.error('Save failed:', error);
       toast.dismiss();
