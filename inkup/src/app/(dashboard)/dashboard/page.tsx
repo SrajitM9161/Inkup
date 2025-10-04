@@ -30,13 +30,20 @@ export default function DashboardPage() {
     setIsGenerating,
     isGenerating,
     canvasMode,
+    segmentationMode,
   } = useToolStore();
   
   const { addResultImage } = useEditToolStore();
   
   const handleGenerate = async () => {
+    
     if (!userImage || !itemImage) {
       toast.error('Upload both human and tattoo images first!');
+      return;
+    }
+    
+    if (segmentationMode) {
+      toast.error('Exit segmentation mode to generate');
       return;
     }
     
@@ -60,7 +67,6 @@ export default function DashboardPage() {
         canvasRef.current.clearCanvas();
         setTool('pen');
       } catch (err) {
-        console.error(err);
         toast.error('Failed to generate');
       } finally {
         setIsGenerating(false);
@@ -78,10 +84,12 @@ export default function DashboardPage() {
       </Suspense>
 
       <div className="w-screen h-screen overflow-hidden flex flex-row-reverse bg-dot-pattern text-white">
+        {/* Desktop Sidebar */}
         <div className="hidden lg:block w-[320px] shrink-0 border-l border-white/10 bg-[#0D0D0D]">
           <CatalogSidebar />
         </div>
 
+        {/* Mobile Sidebar */}
         {sidebarOpenMobile && (
           <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex justify-end">
             <div className="w-[320px] bg-[#0D0D0D] h-full relative z-[10000]">
@@ -94,10 +102,13 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Main Content Area */}
         <div className="flex-1 h-full flex flex-col relative">
+          {/* Modals */}
           <UploadModal isOpen={uploadModalOpen} onClose={() => setUploadModalOpen(false)} />
           <ItemUploadModal isOpen={itemUploadModalOpen} onClose={() => setItemUploadModalOpen(false)} />
 
+          {/* Mobile Menu Button */}
           <div className="flex lg:hidden justify-between items-center px-4 py-3 border-b border-white/10 bg-[#0D0D0D] shrink-0">
             <button
               onClick={() => setSidebarOpenMobile(true)}
@@ -107,6 +118,7 @@ export default function DashboardPage() {
             </button>
           </div>
           
+          {/* Main Content */}
           <main className="flex-grow overflow-auto flex flex-col items-center justify-center p-6">
             {!userImage ? (
               <div className="text-center">
@@ -123,7 +135,7 @@ export default function DashboardPage() {
             )}
           </main>
           
-          {canvasMode && <BrushModeLayout />}
+          {canvasMode && !segmentationMode && <BrushModeLayout />}
           
           {!canvasMode && (
             <BottomBar
@@ -132,7 +144,7 @@ export default function DashboardPage() {
               onGenerate={handleGenerate}
               isGenerating={isGenerating ?? false}
               canvasRef={canvasRef}
-              disableGenerate={!userImage || !itemImage}
+              disableGenerate={!userImage || !itemImage || segmentationMode}
             />
           )}
         </div>

@@ -87,6 +87,19 @@ interface ToolState {
   /* Brush Engine Actions */
   setCanvasMode: (val: boolean) => void;
   setBrush: (brush: IBrush) => void;
+
+  // Segmentation state
+  segmentationMode: boolean;
+  segmentationPoints: Array<{ x: number; y: number; type: 'positive' | 'negative' }>;
+  segmentationMask: ImageData | null;
+  isSegmenting: boolean;
+  
+  // Actions
+  setSegmentationMode: (val: boolean) => void;
+  addSegmentationPoint: (point: { x: number; y: number; type: 'positive' | 'negative' }) => void;
+  clearSegmentationPoints: () => void;
+  setSegmentationMask: (mask: ImageData | null) => void;
+  setIsSegmenting: (val: boolean) => void;
 }
 
 interface EditToolState {
@@ -132,6 +145,12 @@ export const useToolStore = create<ToolState>((set) => ({
   canvasMode: false,
   brush: sketchPencilBrush, 
 
+  /* Segmentation State */
+  segmentationMode: false,
+  segmentationPoints: [],
+  segmentationMask: null,
+  isSegmenting: false,
+
   /* Actions */
   setUserImage: (img) => set({ userImage: img }),
   setUploadedFile: (file) => set({ uploadedFile: file }),
@@ -170,6 +189,29 @@ export const useToolStore = create<ToolState>((set) => ({
     })),
   clearGeneratedItems: () => set({ generatedItems: [] }),
 
+  setSegmentationMode: (val) => {
+    console.log('[Store] Setting segmentation mode:', val);
+    set({ segmentationMode: val });
+  },
+  addSegmentationPoint: (point) => {
+    console.log('[Store] Adding segmentation point:', point);
+    set((state) => ({
+      segmentationPoints: [...state.segmentationPoints, point],
+    }));
+  },
+  clearSegmentationPoints: () => {
+    console.log('[Store] Clearing segmentation points');
+    set({ segmentationPoints: [], segmentationMask: null });
+  },
+  setSegmentationMask: (mask) => {
+    console.log('[Store] Setting segmentation mask:', mask ? 'ImageData received' : 'null');
+    set({ segmentationMask: mask });
+  },
+  setIsSegmenting: (val) => {
+    console.log('[Store] Setting isSegmenting:', val);
+    set({ isSegmenting: val });
+  },
+
   undo: () => {},
   redo: () => {},
 
@@ -195,6 +237,10 @@ export const useToolStore = create<ToolState>((set) => ({
       generatedItems: [],
       canvasMode: false,
       brush: sketchPencilBrush, 
+      segmentationMode: false,
+      segmentationPoints: [],
+      segmentationMask: null,
+      isSegmenting: false
     }),
 
   clearPersistedImages: () => {

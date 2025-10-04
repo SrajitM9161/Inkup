@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-
   async rewrites() {
     return [
       {
@@ -29,12 +28,27 @@ const nextConfig = {
       },
     ],
   },
-   eslint: {
+  eslint: {
     ignoreDuringBuilds: true,
   },
-
   typescript: {
     ignoreBuildErrors: true,
+  },
+  
+  webpack: (
+    config: any,
+    { isServer }: { buildId: string; dev: boolean; isServer: boolean; defaultLoaders: any; webpack: any }
+  ) => {
+    if (isServer) {
+      config.output.publicPath = '';
+    }
+    
+    config.module.rules.push({
+      test: /\.worker\.(js|ts)$/,
+      use: { loader: 'worker-loader' },
+    });
+
+    return config;
   },
 };
 
