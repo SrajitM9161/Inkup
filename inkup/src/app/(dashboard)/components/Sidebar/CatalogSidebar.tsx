@@ -5,8 +5,8 @@ import { ChevronDown } from 'lucide-react';
 import CatalogTab from './tab-content/CatalogTab';
 import GeneratedTab from './tab-content/GeneratedTab';
 import UserTattooTab from './tab-content/UsertattooTab';
-// import EditedOutputTab from './tab-content/EditedOutputTab'; 
 import AccountBadge from './Profile/AccountBadge';
+import { ProjectFile } from '../types/canvas';
 
 const defaultTabs = [
   { key: 'catalog', label: 'InkaraAI Tattoo’s' },
@@ -17,13 +17,18 @@ const defaultTabs = [
 
 type Tab = (typeof defaultTabs)[number];
 
+interface CatalogSidebarProps {
+  onClose?: () => void;
+  isMobileSidebarOpen?: boolean;
+  handleEditProject: (project: ProjectFile) => void;
+}
+
+
 export default function CatalogSidebar({
   onClose,
   isMobileSidebarOpen = true,
-}: {
-  onClose?: () => void;
-  isMobileSidebarOpen?: boolean;
-}) {
+  handleEditProject, 
+}: CatalogSidebarProps) {
   const [tabs] = useState(defaultTabs);
   const [activeTab, setActiveTab] = useState<Tab>(defaultTabs[0]);
   const [isOpen, setIsOpen] = useState(false);
@@ -45,7 +50,7 @@ export default function CatalogSidebar({
   const renderTabContent = () => {
     if (activeTab.key === 'catalog')
       return <CatalogTab onSelect={isMobileSidebarOpen ? onClose : undefined} />;
-    if (activeTab.key === 'generated') return <GeneratedTab />;
+    if (activeTab.key === 'generated') return <GeneratedTab handleEditProject={handleEditProject} />;
     // if (activeTab.key === 'edited') return <EditedOutputTab />; 
     if (activeTab.key === 'user-tattoos') return <UserTattooTab />;
   };

@@ -1,0 +1,92 @@
+import uploadImageToCloudinary from '../config/Cloudinary.config.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import ApiResponseHandler from '../utils/apiResponseHandler.js';
+import ApiErrorHandler from '../utils/apiErrorHandler.js';
+import prisma from '../../prisma/prismaClient.js';
+import { cleanupFiles } from '../utils/cleanupFilesHandler.js';
+
+export const saveProject = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const localFilePath = req.file?.path;
+
+  if (!req.file) throw new ApiErrorHandler(400, 'Preview image file is required.');
+  if (!req.body.projectData) {
+    if (localFilePath) await cleanupFiles([localFilePath]);
+    throw new ApiErrorHandler(400, 'Project data is required.');
+  }
+
+  try {
+    const previewImageUrl = await uploadImageToCloudinary(localFilePath);
+    if (!previewImageUrl) throw new ApiErrorHandler(500, 'Failed to upload preview image.');
+
+    const projectData = JSON.parse(req.body.projectData);
+
+
+    const transactionResult = await prisma.$transaction(async (tx) => {
+      const newProject = await tx.project.create({
+        data: {
+          userId: userId,
+          baseImageSrc: projectData.baseImageSrc,
+          previewImageUrl: previewImageUrl,
+          projectData: projectData,
+        },
+      });
+
+      const newGeneration = await tx.generation.create({
+        data: {
+          userId: userId,
+          status: 'COMPLETED',
+          userImageUrl: previewImageUrl, 
+          projectId: newProject.id,
+        },
+      });
+
+      await tx.generationAsset.create({
+        data: {
+          generationId: newGeneration.id,
+          outputImageUrl: previewImageUrl,
+        },
+      });
+      
+      return { newProject, newGeneration };
+    });
+
+    new ApiResponseHandler(201, 'Project saved successfully', {
+      projectId: transactionResult.newProject.id,
+      generationId: transactionResult.newGeneration.id,
+      previewImageUrl: transactionResult.newProject.previewImageUrl,
+    }).send(res);
+
+  } catch (error) {
+    throw error;
+  } finally {
+    if (localFilePath) await cleanupFiles([localFilePath]);
+  }
+});
+
+
+export const getProjectById = asyncHandler(async (req, res) => {
+    const { projectId } = req.params;
+    const userId = req.user.id;
+
+    const project = await prisma.project.findUnique({
+        where: {
+            id: projectId,
+            userId: userId, 
+        },
+    });
+
+    if (!project) {
+        throw new ApiErrorHandler(404, "Project not found or you don't have access.");
+    }
+
+
+    new ApiResponseHandler(200, "Project fetched successfully", project).send(res);
+});
+
+
+export const getMyProjects = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+    const projects = await prisma.project.findMany({ where: { userId } });
+    new ApiResponseHandler(200, "Projects fetched", projects).send(res);
+});

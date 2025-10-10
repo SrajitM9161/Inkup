@@ -16,6 +16,8 @@ import ProtectedRoute from './ProtectedRoute';
 import { generateTryonImage } from '../../api/api';
 import TokenHandler from '../../components/TokenHandler';
 import BrushModeLayout from '../components/canvas/BrushModeLayout';
+import { ProjectFile } from '../components/types/canvas';
+
 
 export default function DashboardPage() {
   const [sidebarOpenMobile, setSidebarOpenMobile] = useState(false);
@@ -30,9 +32,12 @@ export default function DashboardPage() {
     setIsGenerating,
     isGenerating,
     canvasMode,
+    setCanvasMode,
   } = useToolStore();
   
   const { addResultImage } = useEditToolStore();
+  
+  const [activeProject, setActiveProject] = useState<ProjectFile | null>(null);
   
   const handleGenerate = async () => {
     if (!userImage || !itemImage) {
@@ -71,6 +76,23 @@ export default function DashboardPage() {
     }
   };
 
+  const handleStartNewDrawing = () => {
+    if (userImage) {
+      setActiveProject(null);
+      setCanvasMode(true);
+    } else {
+      toast.error("Please upload an image first.");
+    }
+  };
+
+  const handleEditProject = (projectToLoad: ProjectFile) => {
+    console.log("DashboardPage: handleEditProject called with:", projectToLoad);
+    console.log("DashboardPage: Setting userImage to:", projectToLoad.baseImageSrc);
+    useToolStore.getState().setUserImage(projectToLoad.baseImageSrc);
+    setActiveProject(projectToLoad);
+    setCanvasMode(true);
+  };
+
   return (
     <ProtectedRoute>
       <Suspense fallback={null}>
@@ -79,7 +101,7 @@ export default function DashboardPage() {
 
       <div className="w-screen h-screen overflow-hidden flex flex-row-reverse bg-dot-pattern text-white">
         <div className="hidden lg:block w-[320px] shrink-0 border-l border-white/10 bg-[#0D0D0D]">
-          <CatalogSidebar />
+          <CatalogSidebar handleEditProject={handleEditProject} />
         </div>
 
         {sidebarOpenMobile && (
@@ -88,6 +110,7 @@ export default function DashboardPage() {
               <CatalogSidebar
                 onClose={() => setSidebarOpenMobile(false)}
                 isMobileSidebarOpen={sidebarOpenMobile}
+                handleEditProject={handleEditProject}
               />
             </div>
             <div className="flex-1" onClick={() => setSidebarOpenMobile(false)} />
@@ -123,7 +146,12 @@ export default function DashboardPage() {
             )}
           </main>
           
-          {canvasMode && <BrushModeLayout />}
+          {canvasMode && (
+                    <BrushModeLayout 
+                        key={activeProject ? activeProject.baseImageSrc : userImage} 
+                        initialProject={activeProject} 
+                    />
+                )}
           
           {!canvasMode && (
             <BottomBar

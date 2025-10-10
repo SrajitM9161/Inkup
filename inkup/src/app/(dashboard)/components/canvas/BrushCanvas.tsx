@@ -29,156 +29,85 @@ import {
   downloadRenderTexture,
   exportCanvasAsBase64, 
 } from '../utils/exportUtils';
+import { ProjectFile, Stroke } from '../types/canvas';
 
 interface BrushCanvasProps {
   imageRect: DOMRect;
   baseImageSrc: string;
+  initialProject?: ProjectFile | null;
 }
-
 export type ExportMethod = 'html' | 'pixi' | 'simple' | 'debug_layer';
-
 export interface BrushCanvasHandle {
   exportImage: (method: ExportMethod) => Promise<void>;
   exportToBase64: () => Promise<string | null>;
+  getProjectData: () => Partial<ProjectFile> | null;
 }
 
 const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
-  ({ imageRect, baseImageSrc }, ref) => {
+  ({ imageRect, baseImageSrc, initialProject }, ref) => {
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const appRef = useRef<Application | null>(null);
-    const drawingTextureRef = useRef<RenderTexture | null>(null);
-    const drawingSpriteRef = useRef<Sprite | null>(null);
-    const [reinitTrigger, setReinitTrigger] = useState(0);
-    const hasReinitialized = useRef(false);
+    const [strokes, setStrokes] = useState<Stroke[]>([]);
+    const currentStrokeRef = useRef<Stroke | null>(null);
 
     useImperativeHandle(ref, () => ({
+      getProjectData(): Partial<ProjectFile> | null {
+          if (!imageRect) return null;
+          return {
+              baseImageSrc,
+              projectData: {
+                  version: 1,
+                  baseImageSrc,
+                  dimensions: { width: imageRect.width, height: imageRect.height },
+                  strokes: strokes,
+              }
+          };
+      },
       async exportImage(method: ExportMethod) {
-        if (!appRef.current || !drawingTextureRef.current || !baseImageSrc) {
-          toast.error('Cannot export. Canvas not ready.');
-          return;
-        }
-        toast.loading(`Exporting with method: ${method}...`);
-        try {
-          const app = appRef.current;
-          const texture = drawingTextureRef.current;
-          switch (method) {
-            case 'html':
-              await exportCanvasAsImage(baseImageSrc, app, texture);
-              break;
-            case 'pixi':
-              await exportCanvasAsImageV2(baseImageSrc, app, texture);
-              break;
-            case 'simple':
-              await exportCanvasSimple(baseImageSrc, app, texture);
-              break;
-            case 'debug_layer':
-              downloadRenderTexture(app, texture);
-              break;
-            default:
-              throw new Error('Unknown export method');
-          }
-          toast.dismiss();
-          toast.success(`Export successful with method: ${method}!`);
-        } catch (error) {
-          toast.dismiss();
-          toast.error(`Export failed with method: ${method}.`);
-          console.error(`Export failed with method: ${method}`, error);
-        }
+          if (!appRef.current) return;
+          const { current: app } = appRef;
+          const texture = (app.stage.children[1] as Sprite).texture as RenderTexture;
+          await exportCanvasAsImage(baseImageSrc, app, texture);
       },
       async exportToBase64(): Promise<string | null> {
-        if (!appRef.current || !drawingTextureRef.current || !baseImageSrc) {
-          toast.error('Cannot export. Canvas not ready.');
-          return null;
-        }
-        try {
-          const base64 = await exportCanvasAsBase64(
-            baseImageSrc,
-            appRef.current,
-            drawingTextureRef.current,
-            'png'
-          );
-          return base64;
-        } catch (error) {
-          console.error("Failed to export to Base64", error);
-          toast.error("Could not prepare image for saving.");
-          return null;
-        }
-      }
-    }));
+          if (!appRef.current) return null;
+          const { current: app } = appRef;
+          const texture = (app.stage.children[1] as Sprite).texture as RenderTexture;
+          return await exportCanvasAsBase64(baseImageSrc, app, texture, 'png');
+      },
+    }), [strokes, imageRect, baseImageSrc]); 
 
     useEffect(() => {
       const container = canvasContainerRef.current;
-      if (!container || appRef.current) return;
+      if (!container || !imageRect || imageRect.width === 0) {
+        return;
+      }
 
-      let app: Application;
-
-      const setupPixiApp = async () => {
-        const { width, height, x, y } = imageRect;
-        if (width === 0 || height === 0) return;
-
-        app = new Application();
-        await app.init({ 
-          width, 
-          height, 
-          backgroundColor: 0x000000, 
-          backgroundAlpha: 0, 
-          antialias: true, 
-          autoDensity: true, 
-          resolution: window.devicePixelRatio || 1 
-        });
-        
+      const app = new Application();
+      app.init({
+        width: imageRect.width, height: imageRect.height, backgroundAlpha: 0,
+        antialias: true, autoDensity: true, resolution: window.devicePixelRatio || 1,
+      }).then(() => {
         appRef.current = app;
-        
-        container.style.width = `${width}px`; 
-        container.style.height = `${height}px`; 
-        container.style.left = `${x}px`; 
-        container.style.top = `${y}px`;
+        container.innerHTML = '';
         container.appendChild(app.canvas);
-        
+        container.style.left = `${imageRect.x}px`;
+        container.style.top = `${imageRect.y}px`;
+
         const background = new Sprite(Texture.WHITE);
-        background.width = app.screen.width; 
-        background.height = app.screen.height; 
-        background.alpha = 0; 
-        background.eventMode = 'static';
+        background.width = app.screen.width; background.height = app.screen.height;
+        background.alpha = 0; background.eventMode = 'static';
         app.stage.addChild(background);
 
-        const drawingTexture = RenderTexture.create({ 
-          width: app.screen.width, 
-          height: app.screen.height, 
-          alphaMode: 'premultiplied-alpha' 
-        });
-        drawingTextureRef.current = drawingTexture;
-
+        const drawingTexture = RenderTexture.create({ width: app.screen.width, height: app.screen.height, alphaMode: 'premultiplied-alpha' });
         const drawingSprite = new Sprite(drawingTexture);
-        drawingSpriteRef.current = drawingSprite;
         app.stage.addChild(drawingSprite);
-        
+
         const brushStampContainer = new Container();
         app.stage.addChild(brushStampContainer);
 
-        if (!hasReinitialized.current && reinitTrigger === 0) {
-          hasReinitialized.current = true;
-          
-          setTimeout(() => {
-            if (appRef.current) {
-              appRef.current.destroy(true, { children: true, texture: true });
-              appRef.current = null;
-              drawingTextureRef.current = null;
-              drawingSpriteRef.current = null;
-            }
-            if (container) {
-              while (container.firstChild) {
-                container.removeChild(container.firstChild);
-              }
-            }
-            setReinitTrigger(1);
-          }, 100);
-          return;
-        }
-
-        const brushTexture = Texture.WHITE;
         let pixiMark: ReturnType<typeof createPixiMark> | null = null;
-
+        
         const createPixiMark = (initialBrush: IBrush) => {
           const brush: IBrush = { ...defaultBrush, ...initialBrush };
           const { color, opacity, alpha, size, streamline, variation, jitter, sizeJitter, speed, type, spacing } = brush;
@@ -186,7 +115,6 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
           let prev: number[]; 
           let error = 0;
           const pts: number[][] = [];
-          
           const currentMarkDabs = new Container();
           brushStampContainer.addChild(currentMarkDabs);
 
@@ -220,7 +148,7 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
 
           const drawPoint = ([x, y, r]: number[]) => {
             if (isNaN(r) || r <= 0) return;
-            const dab = new Sprite(brushTexture);
+            const dab = new Sprite(Texture.WHITE);
             dab.tint = type === 'eraser' ? 0xffffff : nColor;
             dab.blendMode = type === 'eraser' ? 'erase' : 'normal';
             dab.anchor.set(0.5); 
@@ -232,21 +160,13 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
           };
 
           const complete = () => {
-            if (pts.length < 3 && pts.length > 0) {
-              addPoint([...pts[pts.length - 1]]);
-            }
-            
-            if (drawingTextureRef.current && appRef.current && drawingSpriteRef.current) {
-              app.renderer.render({
-                target: drawingTextureRef.current,
+            if (pts.length < 3 && pts.length > 0) { addPoint([...pts[pts.length - 1]]); }
+            app.renderer.render({
+                target: drawingTexture,
                 container: currentMarkDabs,
                 clear: false,
-              });
-              
-              drawingSpriteRef.current.texture.update();
-              app.renderer.render(app.stage);
-            }
-            
+            });
+            drawingSprite.texture.update();
             brushStampContainer.removeChild(currentMarkDabs);
             currentMarkDabs.destroy({ children: true });
           };
@@ -254,48 +174,64 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
           return { addPoint, complete };
         };
 
+        if (initialProject) {
+            console.log("useEffect: Loading initial project", initialProject);
+            const strokesToLoad = initialProject.projectData?.strokes || [];
+            const loadedStrokes: Stroke[] = [];
+            strokesToLoad.forEach((stroke) => {
+                if (stroke) {
+                    loadedStrokes.push(stroke);
+                    const mark = createPixiMark(stroke.brush);
+                    stroke.points.forEach((point) => mark.addPoint(point));
+                    mark.complete();
+                }
+            });
+            setStrokes(loadedStrokes);
+        }
+
         const onPointerDown = (e: FederatedPointerEvent) => {
-          const point = e.getLocalPosition(app.stage);
-          pixiMark = createPixiMark(useToolStore.getState().brush);
-          pixiMark.addPoint([point.x, point.y, e.pressure || 0.5]);
+            const point = e.getLocalPosition(app.stage);
+            const currentBrush = useToolStore.getState().brush;
+            pixiMark = createPixiMark(currentBrush);
+            pixiMark.addPoint([point.x, point.y, e.pressure || 0.5]);
+            currentStrokeRef.current = {
+                brush: { ...currentBrush },
+                points: [[point.x, point.y, e.pressure || 0.5]],
+            };
         };
-        
+
         const onPointerMove = (e: FederatedPointerEvent) => {
-          if (pixiMark) {
+            if (!pixiMark) return;
             const point = e.getLocalPosition(app.stage);
             pixiMark.addPoint([point.x, point.y, e.pressure || 0.5]);
-          }
+            currentStrokeRef.current?.points.push([point.x, point.y, e.pressure || 0.5]);
         };
-        
+
         const onPointerUp = () => {
-          if (pixiMark) {
+            if (!pixiMark) return;
             pixiMark.complete();
             pixiMark = null;
-          }
+            
+            console.log("onPointerUp: Finalizing stroke object", currentStrokeRef.current);
+            if (currentStrokeRef.current) {
+                setStrokes(prev => [...prev, currentStrokeRef.current!]);
+                currentStrokeRef.current = null;
+            }
         };
 
         background.on('pointerdown', onPointerDown);
         background.on('pointermove', onPointerMove);
         background.on('pointerup', onPointerUp);
         background.on('pointerupoutside', onPointerUp);
-      };
-      
-      setupPixiApp();
+      });
 
       return () => {
-        if (appRef.current) { 
-          appRef.current.destroy(true, { children: true, texture: true }); 
-          appRef.current = null; 
-          drawingTextureRef.current = null;
-          drawingSpriteRef.current = null;
-        }
-        if (container) { 
-          while (container.firstChild) { 
-            container.removeChild(container.firstChild); 
-          } 
+        if (appRef.current) {
+          appRef.current.destroy(true, { children: true, texture: true });
+          appRef.current = null;
         }
       };
-    }, [imageRect, reinitTrigger]);
+    }, [imageRect.width, imageRect.height, imageRect.x, imageRect.y, initialProject]);
 
     return <div ref={canvasContainerRef} className="absolute z-10" />;
   }

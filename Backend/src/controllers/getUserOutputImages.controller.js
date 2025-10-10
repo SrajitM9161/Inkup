@@ -23,6 +23,7 @@ const getUserOutputImages = asyncHandler(async (req, res) => {
     },
     select: {
       id: true,
+      projectId: true,
       assets: {
         where: { outputImageUrl: { not: null } },
         select: {
@@ -31,22 +32,25 @@ const getUserOutputImages = asyncHandler(async (req, res) => {
           createdAt: true,
         },
         orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
       },
     },
     orderBy: { createdAt: 'desc' },
+    skip,
+    take: limit,
   });
 
-
-  const outputImages = generations.flatMap(({ id: generationId, assets }) =>
+  const outputImages = generations.flatMap(({ id: generationId, projectId, assets }) =>
     assets.map(({ id: assetId, outputImageUrl, createdAt }) => ({
       generationId,
       assetId,
       outputImageUrl,
       createdAt,
+      projectId,
     }))
   );
+  
+  const totalCount = await prisma.generation.count({ where: { userId, status: 'COMPLETED' } });
+  const hasMore = (skip + outputImages.length) < totalCount;
 
   return new ApiResponseHandler(
     200,
@@ -55,7 +59,7 @@ const getUserOutputImages = asyncHandler(async (req, res) => {
       outputImages,
       page,
       limit,
-      hasMore: outputImages.length === limit, 
+      hasMore,
     }
   ).send(res);
 });

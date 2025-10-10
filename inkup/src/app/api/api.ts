@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ProjectFile } from '../(dashboard)/components/types/canvas'; 
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -174,6 +175,40 @@ export const uploadGeneration = async (imageBase64: string): Promise<UploadGener
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 
+  return response.data;
+};
+
+interface SaveProjectResponse {
+  data: {
+    _id: string;
+    user: string;
+    previewImageUrl: string;
+    createdAt: string;
+  }
+}
+
+export const saveProject = async (projectData: Partial<ProjectFile>, previewImageBase64: string): Promise<SaveProjectResponse> => {
+  const previewImageFile = await base64ToFile(previewImageBase64, 'preview.png');
+
+  const formData = new FormData();
+
+  formData.append('previewImage', previewImageFile);
+  
+  // The backend controller expects the 'projectData' to be the nested object.
+  // The getProjectData function in BrushCanvas is already creating this structure.
+  // We just need to stringify it.
+  formData.append('projectData', JSON.stringify(projectData.projectData));
+
+  const response = await api.post('/api/user/projects', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+  return response.data;
+};
+
+export const getProjectById = async (projectId: string): Promise<{ data: ProjectFile }> => {
+  const response = await api.get(`/api/user/projects/${projectId}`);
+  console.log("API Response from getProjectById:", response.data);
   return response.data;
 };
 

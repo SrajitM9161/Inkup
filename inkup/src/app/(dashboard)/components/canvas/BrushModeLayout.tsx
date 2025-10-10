@@ -7,9 +7,15 @@ import BrushCanvas, { BrushCanvasHandle, ExportMethod } from './BrushCanvas';
 import BrushControls from './BrushControls';
 import { Download, Save, MessageSquarePlus, X } from 'lucide-react';
 import PromptBox from '../prompt/PromptBox';
-import { uploadGeneration } from '../../../api/api'; 
+import { saveProject } from '../../../api/api';
+import { ProjectFile } from '../types/canvas';
 
-export default function BrushModeLayout() {
+
+export default function BrushModeLayout({
+  initialProject,
+}: {
+  initialProject?: ProjectFile | null;
+}) {
   const { userImage, setCanvasMode, setUserImage } = useToolStore();
   const [promptOpen, setPromptOpen] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -49,33 +55,38 @@ export default function BrushModeLayout() {
   };
   
   const handleSave = async () => {
+
     if (!brushCanvasRef.current || isSaving) {
+      console.error("3. EXIT: Ref is not ready or already saving.");
       return;
     }
 
     setIsSaving(true);
-    toast.loading('Saving to your generations...');
-
+    
+    toast.loading('Saving your project...');
+    
     try {
-      const imageBase64 = await brushCanvasRef.current.exportToBase64();
-
-      if (!imageBase64) {
-        throw new Error('Failed to get image data from canvas.');
+      const projectData = brushCanvasRef.current.getProjectData();
+      
+      if (!projectData) {
+        throw new Error('Could not get project data from canvas.');
       }
 
-      const response = await uploadGeneration(imageBase64);
+      const previewImageBase64 = await brushCanvasRef.current.exportToBase64();
+      
+      if (!previewImageBase64) {
+        throw new Error('Failed to generate preview image.');
+      }
+
+      const response = await saveProject(projectData, previewImageBase64);
       
       toast.dismiss();
-      toast.success('Successfully saved to generations!');
-
-      if (response.data && response.data.imageUrl) {
-        setUserImage(response.data.imageUrl);
-      }
+      toast.success('Successfully saved project!');
 
     } catch (error) {
-      console.error('Save failed:', error);
+      console.error("SAVE FAILED (in catch block):", error);
       toast.dismiss();
-      toast.error('Could not save the image.', { id: 'save-error-toast' });
+      toast.error('Could not save the project.', { id: 'save-error-toast' });
     } finally {
       setIsSaving(false);
     }
@@ -136,6 +147,7 @@ export default function BrushModeLayout() {
             ref={brushCanvasRef}
             imageRect={imageRect}
             baseImageSrc={userImage}
+            initialProject={initialProject}
           />
         )}
       </div>
