@@ -22,6 +22,7 @@ export default function BrushModeLayout({
   const brushCanvasRef = useRef<BrushCanvasHandle>(null);
   const [imageRect, setImageRect] = useState<DOMRect | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [liveCanvasImage, setLiveCanvasImage] = useState<string | null>(null);
 
   useEffect(() => {
     const imgElement = imageRef.current;
@@ -101,6 +102,27 @@ export default function BrushModeLayout({
     }
   };
 
+  const handleOpenPromptBox = async () => {
+    if (!brushCanvasRef.current) {
+      toast.error("Canvas is not ready.");
+      return;
+    }
+    toast.loading("Preparing canvas for editing...");
+    const image = await brushCanvasRef.current.exportToBase64();
+    toast.dismiss();
+    if (image) {
+      setLiveCanvasImage(image);
+      setPromptOpen(true);
+    } else {
+      toast.error("Could not export canvas image.");
+    }
+  };
+
+  const closePromptBox = () => {
+    setPromptOpen(false);
+    setLiveCanvasImage(null);
+  };
+
   return (
     <div className="fixed inset-0 z-40 bg-[#181818] flex flex-col">
       <div className="absolute top-5 left-5 z-20 flex items-center gap-2 flex-wrap">
@@ -122,7 +144,7 @@ export default function BrushModeLayout({
           <span>{isSaving ? 'Saving...' : 'Save'}</span>
         </button>
         <button
-          onClick={() => setPromptOpen(true)}
+          onClick={handleOpenPromptBox}
           className="flex items-center gap-2 px-3 py-2 bg-[#1A1A1A] border border-[#333] text-white rounded-lg hover:bg-[#D0FE17] hover:text-black transition"
           title="Edit with Prompt"
         >
@@ -168,8 +190,12 @@ export default function BrushModeLayout({
           </div>
         </div>
       </div>
-
-      <PromptBox open={promptOpen} onClose={() => setPromptOpen(false)} />
+      
+      <PromptBox 
+        open={promptOpen} 
+        onClose={closePromptBox} 
+        overrideDisplayImage={liveCanvasImage}
+      />
     </div>
   );
 }

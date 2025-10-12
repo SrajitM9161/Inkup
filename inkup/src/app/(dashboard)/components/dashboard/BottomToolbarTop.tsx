@@ -22,6 +22,7 @@ interface BottomToolbarTopProps {
 export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
   const {
     userImage,
+    previewImage, 
     tool,
     setTool,
     strokeWidth,
@@ -35,14 +36,11 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
   useKeyboardShortcuts(canvasRef);
   
   const handleEnterBrushMode = () => {
-    if (userImage) {
+    if (userImage || previewImage) {
       setCanvasMode(true);
     } else {
-      // If no image, open a modal to ask for canvas size.
-      // You would build this modal component. For now, it logs and shows a toast.
       console.log("TODO: Open Canvas Size Modal");
       toast("Please upload an image to use as a canvas base first.");
-      // setShowCanvasSizeModal(true); 
     }
   };
 
@@ -51,7 +49,9 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
   };
 
   const handleDownload = useCallback(async () => {
-    if (!canvasRef.current || !userImage) {
+    const imageToDownload = previewImage || userImage;
+
+    if (!canvasRef.current || !imageToDownload) {
       toast.error('Nothing to export');
       return;
     }
@@ -65,7 +65,7 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
       background.crossOrigin = 'anonymous';
       overlay.crossOrigin = 'anonymous';
 
-      background.src = userImage;
+      background.src = imageToDownload;
       overlay.src = sketch;
 
       await Promise.all([
@@ -103,7 +103,7 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
       console.error('Download error:', error);
       toast.error('Download failed (CORS issue or image load error)');
     }
-  }, [canvasRef, userImage]);
+  }, [canvasRef, userImage, previewImage]);
 
   const undo = () => canvasRef.current?.undo?.();
   const redo = () => canvasRef.current?.redo?.();
@@ -149,8 +149,6 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
           />
         </span>
       </div>
-
-      {/* <CanvasSizeModal isOpen={showCanvasSizeModal} ... /> */}
 
       <PromptBox open={promptOpen} onClose={() => setPromptOpen(false)} />
     </>

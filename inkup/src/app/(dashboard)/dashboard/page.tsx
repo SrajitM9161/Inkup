@@ -40,7 +40,7 @@ export default function DashboardPage() {
     setActiveProject,
   } = useToolStore();
   
-  const { addResultImage } = useEditToolStore();
+  const { addResultImage, clearImages } = useEditToolStore();
   
   const handleGenerate = async () => {
     const imageForGeneration = previewImage || userImage;
@@ -65,10 +65,13 @@ export default function DashboardPage() {
         const generated = await generateTryonImage(imageForGeneration, itemImage, mask);
         clearTimeout(timeoutId);
         
-        addResultImage(generated);
+        clearImages();
+        
+        setUserImage(generated);
         
         canvasRef.current.clearCanvas();
         setTool('pen');
+
       } catch (err) {
         console.error(err);
         toast.error('Failed to generate');
