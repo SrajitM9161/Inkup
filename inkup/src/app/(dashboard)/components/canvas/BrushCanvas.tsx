@@ -24,9 +24,6 @@ import { lerp, lerpPoints } from '../utils/brushUtils';
 import { defaultBrush } from '../../lib/brushes';
 import {
   exportCanvasAsImage,
-  exportCanvasAsImageV2,
-  exportCanvasSimple,
-  downloadRenderTexture,
   exportCanvasAsBase64, 
 } from '../utils/exportUtils';
 import { ProjectFile, Stroke } from '../types/canvas';
@@ -35,6 +32,7 @@ interface BrushCanvasProps {
   imageRect: DOMRect;
   baseImageSrc: string;
   initialProject?: ProjectFile | null;
+  onDirty?: () => void; 
 }
 export type ExportMethod = 'html' | 'pixi' | 'simple' | 'debug_layer';
 export interface BrushCanvasHandle {
@@ -44,7 +42,7 @@ export interface BrushCanvasHandle {
 }
 
 const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
-  ({ imageRect, baseImageSrc, initialProject }, ref) => {
+  ({ imageRect, baseImageSrc, initialProject, onDirty }, ref) => {
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const appRef = useRef<Application | null>(null);
     const [strokes, setStrokes] = useState<Stroke[]>([]);
@@ -220,6 +218,7 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
 
             if (completedStroke && completedStroke.points.length > 0) {
                 setStrokes(prevStrokes => [...prevStrokes, completedStroke]);
+                onDirty?.();
             }
         };
 
