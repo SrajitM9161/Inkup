@@ -13,12 +13,14 @@ interface UserCanvasProps {
 export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   const {
     userImage,
+    previewImage,
     tool,
     strokeWidth,
     isGenerating,
     setIsGenerating,
     clearPersistedImages,
     setUserImage,
+    setPreviewImage,
   } = useToolStore()
   const { resultImages, clearImages } = useEditToolStore()
 
@@ -34,7 +36,8 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   const shownRef = useRef<string | null>(null)
 
   useEffect(() => {
-    const src = latest ?? userImage ?? null;
+    const src = latest ?? previewImage ?? userImage ?? null;
+
     if (!src) {
       setDisplayImage(null);
       shownRef.current = null;
@@ -46,7 +49,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
       setImageLoaded(false);
       const img = new Image();
       img.onload = () => {
-        const stillRelevantSrc = useEditToolStore.getState().resultImages.slice(-1)[0] ?? useToolStore.getState().userImage;
+        const stillRelevantSrc = useEditToolStore.getState().resultImages.slice(-1)[0] ?? useToolStore.getState().previewImage ?? useToolStore.getState().userImage;
         if (img.src === stillRelevantSrc) {
             shownRef.current = src;
             setDisplayImage(src);
@@ -62,10 +65,9 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
       };
       img.src = src;
     }
-  }, [userImage, latest, setIsGenerating]);
+  }, [userImage, previewImage, latest, setIsGenerating]);
 
   useEffect(() => {
-
     if (userImage) {
         if (latest && latest !== userImage) {
             clearImages();
@@ -83,12 +85,13 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
     const currentImageOnCanvas = shownRef.current
 
     if (currentImageOnCanvas) {
-      if (userImage === currentImageOnCanvas) {
+      if (userImage === currentImageOnCanvas && !previewImage) {
         toast('This is already the base image.')
         return
       }
       
       setUserImage(currentImageOnCanvas)
+      setPreviewImage(null); 
       clearImages()
 
       toast.success('Latest output set as base image!')
@@ -147,7 +150,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
           )}
         </div>
 
-        {(isGenerating || (!imageLoaded && (latest || userImage))) && (
+        {(isGenerating || (!imageLoaded && (latest || previewImage || userImage))) && (
           <div className="absolute inset-0 z-50 bg-black/50 flex flex-col items-center justify-center">
             <Loader />
             <p className="text-sm text-white mt-3 animate-pulse">

@@ -53,6 +53,7 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
     useImperativeHandle(ref, () => ({
       getProjectData(): Partial<ProjectFile> | null {
           if (!imageRect) return null;
+          console.log('Getting project data. Total strokes:', strokes.length, strokes); // Debug log
           return {
               baseImageSrc,
               projectData: {
@@ -209,13 +210,16 @@ const BrushCanvas = forwardRef<BrushCanvasHandle, BrushCanvasProps>(
 
         const onPointerUp = () => {
             if (!pixiMark) return;
+
             pixiMark.complete();
             pixiMark = null;
             
-            console.log("onPointerUp: Finalizing stroke object", currentStrokeRef.current);
-            if (currentStrokeRef.current) {
-                setStrokes(prev => [...prev, currentStrokeRef.current!]);
-                currentStrokeRef.current = null;
+            const completedStroke = currentStrokeRef.current;
+            
+            currentStrokeRef.current = null;
+
+            if (completedStroke && completedStroke.points.length > 0) {
+                setStrokes(prevStrokes => [...prevStrokes, completedStroke]);
             }
         };
 

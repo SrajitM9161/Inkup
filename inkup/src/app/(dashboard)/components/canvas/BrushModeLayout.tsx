@@ -8,7 +8,7 @@ import BrushControls from './BrushControls';
 import { Download, Save, MessageSquarePlus, X } from 'lucide-react';
 import PromptBox from '../prompt/PromptBox';
 import { saveProject } from '../../../api/api';
-import { ProjectFile } from '../types/canvas';
+import { ProjectFile, Stroke } from '../types/canvas';
 
 
 export default function BrushModeLayout({
@@ -16,7 +16,7 @@ export default function BrushModeLayout({
 }: {
   initialProject?: ProjectFile | null;
 }) {
-  const { userImage, setCanvasMode, setUserImage } = useToolStore();
+  const { userImage, setCanvasMode, setUserImage, setPreviewImage, setActiveProject } = useToolStore();
   const [promptOpen, setPromptOpen] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
   const brushCanvasRef = useRef<BrushCanvasHandle>(null);
@@ -55,34 +55,43 @@ export default function BrushModeLayout({
   };
   
   const handleSave = async () => {
-
     if (!brushCanvasRef.current || isSaving) {
-      console.error("3. EXIT: Ref is not ready or already saving.");
       return;
     }
 
     setIsSaving(true);
-    
     toast.loading('Saving your project...');
     
     try {
-      const projectData = brushCanvasRef.current.getProjectData();
+      const projectDataPartial = brushCanvasRef.current.getProjectData();
       
-      if (!projectData) {
-        throw new Error('Could not get project data from canvas.');
+      if (!projectDataPartial || !projectDataPartial.baseImageSrc || !projectDataPartial.projectData) {
+        throw new Error('Could not get complete project data from canvas.');
       }
 
       const previewImageBase64 = await brushCanvasRef.current.exportToBase64();
-      
       if (!previewImageBase64) {
         throw new Error('Failed to generate preview image.');
       }
 
-      const response = await saveProject(projectData, previewImageBase64);
-      
-      toast.dismiss();
-      toast.success('Successfully saved project!');
+      const response = await saveProject(projectDataPartial, previewImageBase64);
+      const savedProjectResponse = response.data;
 
+      toast.dismiss();
+      toast.success('Project saved!');
+      
+      const updatedProjectFile: ProjectFile = {
+          ...(initialProject || {}),
+          ...projectDataPartial,
+          id: savedProjectResponse._id || initialProject?.id,
+          baseImageSrc: projectDataPartial.baseImageSrc,
+          projectData: projectDataPartial.projectData,
+          previewImageUrl: savedProjectResponse.previewImageUrl,
+      };
+      
+      setActiveProject(updatedProjectFile);
+      setPreviewImage(updatedProjectFile.previewImageUrl || null);
+      
     } catch (error) {
       console.error("SAVE FAILED (in catch block):", error);
       toast.dismiss();

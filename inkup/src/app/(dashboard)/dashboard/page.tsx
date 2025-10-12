@@ -28,19 +28,24 @@ export default function DashboardPage() {
   const {
     userImage,
     itemImage,
+    previewImage,
     setTool,
     setIsGenerating,
     isGenerating,
     canvasMode,
     setCanvasMode,
+    setUserImage,
+    setPreviewImage,
+    activeProject,
+    setActiveProject,
   } = useToolStore();
   
   const { addResultImage } = useEditToolStore();
   
-  const [activeProject, setActiveProject] = useState<ProjectFile | null>(null);
-  
   const handleGenerate = async () => {
-    if (!userImage || !itemImage) {
+    const imageForGeneration = previewImage || userImage;
+
+    if (!imageForGeneration || !itemImage) {
       toast.error('Upload both human and tattoo images first!');
       return;
     }
@@ -57,7 +62,7 @@ export default function DashboardPage() {
           toast.error('Image generation timed out.');
         }, 120000);
 
-        const generated = await generateTryonImage(userImage, itemImage, mask);
+        const generated = await generateTryonImage(imageForGeneration, itemImage, mask);
         clearTimeout(timeoutId);
         
         addResultImage(generated);
@@ -86,11 +91,12 @@ export default function DashboardPage() {
   };
 
   const handleEditProject = (projectToLoad: ProjectFile) => {
-    console.log("DashboardPage: handleEditProject called with:", projectToLoad);
-    console.log("DashboardPage: Setting userImage to:", projectToLoad.baseImageSrc);
-    useToolStore.getState().setUserImage(projectToLoad.baseImageSrc);
+    console.log("DashboardPage: Loading project into User Canvas view.", projectToLoad);
+    
+    setUserImage(projectToLoad.baseImageSrc);
+    setPreviewImage(projectToLoad.previewImageUrl || null);
     setActiveProject(projectToLoad);
-    setCanvasMode(true);
+    setCanvasMode(false);
   };
 
   return (
@@ -147,11 +153,11 @@ export default function DashboardPage() {
           </main>
           
           {canvasMode && (
-                    <BrushModeLayout 
-                        key={activeProject ? activeProject.baseImageSrc : userImage} 
-                        initialProject={activeProject} 
-                    />
-                )}
+            <BrushModeLayout 
+              key={activeProject ? activeProject.id : userImage} 
+              initialProject={activeProject}
+            />
+          )}
           
           {!canvasMode && (
             <BottomBar
