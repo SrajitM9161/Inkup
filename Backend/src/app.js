@@ -14,6 +14,8 @@ import tryonRoutes from './routes/tryon.route.js';
 import outputimage from './routes/outputimage.route.js';
 import imageRoutes from './routes/editimage.routes.js';
 import userRoutes from './routes/user.route.js';
+import generationRoutes from './routes/generation.routes.js';
+import projectRoutes from './routes/project.routes.js';
 import uploadUsertatto from './routes/uploadusertattoo.routes.js';
 import * as Sentry from '@sentry/node';
 import './instrument.js';
@@ -64,6 +66,8 @@ app.use('/api/tryon', tryonRoutes);
 app.use('/api', outputimage);
 app.use("/api/images", imageRoutes);
 app.use("/api/tattoo", uploadUsertatto);
+app.use('/api/user/generations', generationRoutes);
+app.use('/api/user/projects', projectRoutes);
 app.get('/health', (req, res) => {
   res.status(200).json({ success: true, message: 'Server healthy' });
 });

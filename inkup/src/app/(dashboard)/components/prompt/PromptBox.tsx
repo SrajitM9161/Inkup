@@ -12,20 +12,22 @@ import { usePromptSubmit } from "./Hooks/usePromptSubmit";
 interface PromptBoxProps {
   open: boolean;
   onClose: () => void;
+  overrideDisplayImage?: string | null;
 }
 
-export default function PromptBox({ open, onClose }: PromptBoxProps) {
+export default function PromptBox({ open, onClose, overrideDisplayImage }: PromptBoxProps) {
   const [promptInput, setPromptInput] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [displayImage, setDisplayImage] = useState<string | null>(null);
 
-  const { userImage } = useToolStore();
+  const { userImage, previewImage } = useToolStore();
 
   useEffect(() => {
     if (open) {
-      setDisplayImage(userImage);
+      const imageToShow = overrideDisplayImage || previewImage || userImage;
+      setDisplayImage(imageToShow);
     }
-  }, [userImage, open]);
+  }, [userImage, previewImage, open, overrideDisplayImage]);
 
   const handleSubmit = usePromptSubmit(onClose, promptInput, files, displayImage);
 

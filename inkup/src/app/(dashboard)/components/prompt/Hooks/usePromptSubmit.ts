@@ -2,9 +2,10 @@ import { useCallback } from "react";
 import toast from "react-hot-toast";
 import { editImages } from "../../../../api/api";
 import { useEditToolStore, useToolStore } from "../../../lib/store";
-import { base64ToFile } from "./useFileUtils";
 
 const urlToBase64 = async (url: string): Promise<string> => {
+  if (!url.startsWith('http')) return url;
+
   const response = await fetch(url);
   const blob = await response.blob();
   return new Promise((resolve, reject) => {
@@ -22,8 +23,8 @@ export const usePromptSubmit = (
   files: File[],
   displayImage: string | null
 ) => {
-  const { setPrompt, addResultImage, clearImages } = useEditToolStore();
-  const { setIsGenerating } = useToolStore();
+  const { setPrompt, clearImages } = useEditToolStore();
+  const { setIsGenerating, setUserImage } = useToolStore();
 
   const handleSubmit = useCallback(async () => {
     const sourceImage = displayImage;
@@ -32,27 +33,18 @@ export const usePromptSubmit = (
       toast.error("Please provide a prompt or select an image.");
       return;
     }
-
+    
     onClose();
     setPrompt(promptInput);
     setIsGenerating(true);
 
     try {
       let imageToSend = sourceImage;
-
-      if (imageToSend && imageToSend.startsWith('http')) {
-        toast.loading('Preparing image...');
-        try {
-          imageToSend = await urlToBase64(imageToSend);
-        } catch (error) {
-          toast.dismiss();
-          toast.error("Failed to fetch the image for editing.");
-          setIsGenerating(false);
-          return;
-        }
-        toast.dismiss();
-      }
-
+      
+      toast.loading('Preparing image...');
+      imageToSend = await urlToBase64(imageToSend!);
+      toast.dismiss();
+      
       const base64Images = imageToSend ? [imageToSend] : [];
 
       if (base64Images.length === 0) {
@@ -61,13 +53,15 @@ export const usePromptSubmit = (
         return;
       }
 
-      clearImages();
-
       const task = editImages(promptInput, base64Images).then((data: any) => {
         const out = data?.data?.outputAssets;
         if (Array.isArray(out) && out.length) {
-          out.forEach((asset: any) => addResultImage(asset.outputImageUrl));
-          return "Images generated successfully!";
+          const newImageUrl = out[0]?.outputImageUrl;
+          if (newImageUrl) {
+            clearImages();
+            setUserImage(newImageUrl);
+          }
+          return "Image generated successfully!";
         }
         throw new Error(data?.error || "Invalid response from server");
       });
@@ -79,10 +73,14 @@ export const usePromptSubmit = (
       });
 
       await task;
-    } finally {
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error instanceof Error ? error.message : "An unknown error occurred.");
+    }
+    finally {
       setIsGenerating(false);
     }
-  }, [promptInput, files, displayImage, onClose, setPrompt, setIsGenerating, clearImages, addResultImage]);
+  }, [promptInput, files, displayImage, onClose, setPrompt, setIsGenerating, setUserImage, clearImages]);
 
   return handleSubmit;
 };

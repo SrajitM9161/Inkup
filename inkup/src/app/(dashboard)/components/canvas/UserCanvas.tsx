@@ -13,12 +13,14 @@ interface UserCanvasProps {
 export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   const {
     userImage,
+    previewImage,
     tool,
     strokeWidth,
     isGenerating,
     setIsGenerating,
     clearPersistedImages,
     setUserImage,
+    setPreviewImage,
   } = useToolStore()
   const { resultImages, clearImages } = useEditToolStore()
 
@@ -34,49 +36,62 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   const shownRef = useRef<string | null>(null)
 
   useEffect(() => {
-    const src = latest ?? userImage ?? null
-    setImageLoaded(false)
-    setDisplayImage(null)
+    const src = latest ?? previewImage ?? userImage ?? null;
 
     if (!src) {
-      shownRef.current = null
-      return
+      setDisplayImage(null);
+      shownRef.current = null;
+      setImageLoaded(false);
+      return;
     }
 
-    const img = new Image()
-    img.onload = () => {
-      shownRef.current = src
-      setDisplayImage(src)
-      setImageLoaded(true)
-      setIsGenerating(false)
-      toast.dismiss()
+    if (src !== shownRef.current) {
+      setImageLoaded(false);
+      const img = new Image();
+      img.onload = () => {
+        const stillRelevantSrc = useEditToolStore.getState().resultImages.slice(-1)[0] ?? useToolStore.getState().previewImage ?? useToolStore.getState().userImage;
+        if (img.src === stillRelevantSrc) {
+            shownRef.current = src;
+            setDisplayImage(src);
+            setImageLoaded(true);
+            setIsGenerating(false);
+            toast.dismiss();
+        }
+      };
+      img.onerror = () => {
+        setImageLoaded(true);
+        setIsGenerating(false);
+        toast.error('Failed to load image.');
+      };
+      img.src = src;
     }
-    img.onerror = () => {
-      setImageLoaded(true)
-      setIsGenerating(false)
-      toast.error('Failed to load image.')
+  }, [userImage, previewImage, latest, setIsGenerating]);
+
+  useEffect(() => {
+    if (userImage) {
+        if (latest && latest !== userImage) {
+            clearImages();
+        }
     }
-    img.src = src
-  }, [userImage, latest, setIsGenerating])
+  }, [userImage, latest, clearImages]);
 
   const handleClearAll = () => {
     canvasRef.current?.resetCanvas()
     clearPersistedImages()
     clearImages()
-    setDisplayImage(null)
-    shownRef.current = null
   }
 
   const handleSetAsBase = () => {
     const currentImageOnCanvas = shownRef.current
 
     if (currentImageOnCanvas) {
-      if (userImage === currentImageOnCanvas) {
+      if (userImage === currentImageOnCanvas && !previewImage) {
         toast('This is already the base image.')
         return
       }
       
       setUserImage(currentImageOnCanvas)
+      setPreviewImage(null); 
       clearImages()
 
       toast.success('Latest output set as base image!')
@@ -86,7 +101,6 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
   return (
     <>
       <div className="relative w-[280px] h-[420px] md:w-[360px] md:h-[540px] lg:w-[280px] lg:h-[420px] rounded-[20px] overflow-hidden border border-[#333] shadow-[0_0_30px_rgba(255,255,255,0.05)] backdrop-blur-md">
-        {/* Controls */}
         <div className="absolute top-2 right-2 z-30 flex flex-col gap-2">
           <button
             onClick={handleClearAll}
@@ -136,7 +150,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
           )}
         </div>
 
-        {(isGenerating || (!imageLoaded && (latest || userImage))) && (
+        {(isGenerating || (!imageLoaded && (latest || previewImage || userImage))) && (
           <div className="absolute inset-0 z-50 bg-black/50 flex flex-col items-center justify-center">
             <Loader />
             <p className="text-sm text-white mt-3 animate-pulse">
@@ -145,6 +159,7 @@ export default function UserCanvas({ canvasRef }: UserCanvasProps) {
           </div>
         )}
       </div>
+      
       {isFullscreen && displayImage && (
         <div className="fixed inset-0 z-[1000] bg-black/90 flex items-center justify-center p-4">
           <div className="relative w-full h-full flex items-center justify-center">

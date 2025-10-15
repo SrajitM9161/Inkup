@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ProjectFile } from '../(dashboard)/components/types/canvas'; 
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -141,7 +142,6 @@ export const editImages = async (prompt: string, images: string[]) => {
   return res.data;
 };
 
-// ✅ Fetch user's edit output images
 export const getUserEditOutputs = async (page = 1, limit = 20) => {
   const res = await api.get(`/api/user/outputs/edit?page=${page}&limit=${limit}`, {
     withCredentials: true,
@@ -149,7 +149,68 @@ export const getUserEditOutputs = async (page = 1, limit = 20) => {
   return res.data;
 };
 
+const base64ToFile = async (dataUrl: string, filename: string): Promise<File> => {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: blob.type });
+};
 
+
+interface UploadGenerationResponse {
+  data: {
+    generationId: string;
+    assetId: string;
+    imageUrl: string;
+  }
+} 
+
+export const uploadGeneration = async (imageBase64: string): Promise<UploadGenerationResponse> => {
+  const imageFile = await base64ToFile(imageBase64, 'generation.png');
+
+  const formData = new FormData();
+  formData.append('generation', imageFile); 
+
+  const response = await api.post('/api/user/generations', formData, {
+    withCredentials: true,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+  return response.data;
+};
+
+interface SaveProjectResponse {
+  data: {
+    _id: string;
+    user: string;
+    previewImageUrl: string;
+    createdAt: string;
+  }
+}
+
+export const saveProject = async (projectData: Partial<ProjectFile>, previewImageBase64: string): Promise<SaveProjectResponse> => {
+  const previewImageFile = await base64ToFile(previewImageBase64, 'preview.png');
+
+  const formData = new FormData();
+
+  formData.append('previewImage', previewImageFile);
+  
+  // The backend controller expects the 'projectData' to be the nested object.
+  // The getProjectData function in BrushCanvas is already creating this structure.
+  // We just need to stringify it.
+  formData.append('projectData', JSON.stringify(projectData.projectData));
+
+  const response = await api.post('/api/user/projects', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+  return response.data;
+};
+
+export const getProjectById = async (projectId: string): Promise<{ data: ProjectFile }> => {
+  const response = await api.get(`/api/user/projects/${projectId}`);
+  console.log("API Response from getProjectById:", response.data);
+  return response.data;
+};
 
 export default api;
 

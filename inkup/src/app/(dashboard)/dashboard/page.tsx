@@ -15,60 +15,92 @@ import CatalogSidebar from '../components/Sidebar/CatalogSidebar';
 import ProtectedRoute from './ProtectedRoute';
 import { generateTryonImage } from '../../api/api';
 import TokenHandler from '../../components/TokenHandler';
+import BrushModeLayout from '../components/canvas/BrushModeLayout';
+import { ProjectFile } from '../components/types/canvas';
+
 
 export default function DashboardPage() {
   const [sidebarOpenMobile, setSidebarOpenMobile] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [itemUploadModalOpen, setItemUploadModalOpen] = useState(false);
-
   const canvasRef = useRef<ReactSketchCanvasRef | null>(null);
-
 
   const {
     userImage,
     itemImage,
+    previewImage,
     setTool,
     setIsGenerating,
     isGenerating,
-    setResultImage,
+    canvasMode,
+    setCanvasMode,
     setUserImage,
+    setPreviewImage,
+    activeProject,
+    setActiveProject,
   } = useToolStore();
   
-  const { addResultImage } = useEditToolStore();
+  const { addResultImage, clearImages } = useEditToolStore();
   
   const handleGenerate = async () => {
-    if (!canvasRef.current || !userImage || !itemImage) {
+    const imageForGeneration = previewImage || userImage;
+
+    if (!imageForGeneration || !itemImage) {
       toast.error('Upload both human and tattoo images first!');
       return;
     }
+    
+    if (!canvasMode && canvasRef.current) {
+      try {
+        const mask = await canvasRef.current.exportImage('png');
+        toast.loading('Generating your image...');
+        setIsGenerating(true);
 
-    try {
-      const mask = await canvasRef.current.exportImage('png');
-      toast.loading('Generating your image...');
-      setIsGenerating(true);
+        const timeoutId = setTimeout(() => {
+          setIsGenerating(false);
+          toast.dismiss();
+          toast.error('Image generation timed out.');
+        }, 120000);
 
-      const timeoutId = setTimeout(() => {
+        const generated = await generateTryonImage(imageForGeneration, itemImage, mask);
+        clearTimeout(timeoutId);
+        
+        clearImages();
+        
+        setUserImage(generated);
+        
+        canvasRef.current.clearCanvas();
+        setTool('pen');
+
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to generate');
+      } finally {
         setIsGenerating(false);
         toast.dismiss();
-        toast.error('Image generation timed out.');
-      }, 120000);
-
-      const generated = await generateTryonImage(userImage, itemImage, mask);
-      clearTimeout(timeoutId);
-      
-      addResultImage(generated);
-      
-      canvasRef.current.clearCanvas();
-      setTool('pen');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to generate');
-    } finally {
-      setIsGenerating(false);
-      toast.dismiss();
+      }
+    } else if (canvasMode) {
+      toast.error("Generation from brush mode is not implemented yet.");
     }
   };
 
+  const handleStartNewDrawing = () => {
+    if (userImage) {
+      setActiveProject(null);
+      setCanvasMode(true);
+    } else {
+      toast.error("Please upload an image first.");
+    }
+  };
+
+  const handleEditProject = (projectToLoad: ProjectFile) => {
+    console.log("DashboardPage: Loading project into User Canvas view.", projectToLoad);
+    
+    setUserImage(projectToLoad.baseImageSrc);
+    setPreviewImage(projectToLoad.previewImageUrl || null);
+    setActiveProject(projectToLoad);
+    setCanvasMode(false);
+  };
 
   return (
     <ProtectedRoute>
@@ -78,25 +110,27 @@ export default function DashboardPage() {
 
       <div className="w-screen h-screen overflow-hidden flex flex-row-reverse bg-dot-pattern text-white">
         <div className="hidden lg:block w-[320px] shrink-0 border-l border-white/10 bg-[#0D0D0D]">
-          <CatalogSidebar />
+          <CatalogSidebar handleEditProject={handleEditProject} />
         </div>
 
         {sidebarOpenMobile && (
-  <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex justify-end">
-    <div className="w-[320px] bg-[#0D0D0D] h-full relative z-[10000]">
-      <CatalogSidebar
-        onClose={() => setSidebarOpenMobile(false)}
-        isMobileSidebarOpen={sidebarOpenMobile}
-      />
-    </div>
-    <div className="flex-1" onClick={() => setSidebarOpenMobile(false)} />
-  </div>
-)}
-        <div className="flex-1 h-full flex flex-col overflow-hidden relative">
+          <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex justify-end">
+            <div className="w-[320px] bg-[#0D0D0D] h-full relative z-[10000]">
+              <CatalogSidebar
+                onClose={() => setSidebarOpenMobile(false)}
+                isMobileSidebarOpen={sidebarOpenMobile}
+                handleEditProject={handleEditProject}
+              />
+            </div>
+            <div className="flex-1" onClick={() => setSidebarOpenMobile(false)} />
+          </div>
+        )}
+
+        <div className="flex-1 h-full flex flex-col relative">
           <UploadModal isOpen={uploadModalOpen} onClose={() => setUploadModalOpen(false)} />
           <ItemUploadModal isOpen={itemUploadModalOpen} onClose={() => setItemUploadModalOpen(false)} />
 
-          <div className="flex lg:hidden justify-between items-center px-4 py-3 border-b border-white/10 bg-[#0D0D0D]">
+          <div className="flex lg:hidden justify-between items-center px-4 py-3 border-b border-white/10 bg-[#0D0D0D] shrink-0">
             <button
               onClick={() => setSidebarOpenMobile(true)}
               className="flex items-center gap-2 text-sm bg-[#1a1a1a] px-3 py-1 rounded"
@@ -104,9 +138,10 @@ export default function DashboardPage() {
               <Menu size={25} />
             </button>
           </div>
-          <main className="flex-1 overflow-y-auto px-4 py-6 flex flex-col items-center gap-6">
-            {!userImage? (
-              <div className="text-center mt-10">
+          
+          <main className="flex-grow overflow-auto flex flex-col items-center justify-center p-6">
+            {!userImage ? (
+              <div className="text-center">
                 <Image src="/logoinkara.png" alt="Logo" width={100} height={164} className="mx-auto mb-3" />
                 <h1 className="text-3xl font-bold">INKARA AI GENERATE</h1>
                 <p className="text-sm text-gray-400">
@@ -114,11 +149,20 @@ export default function DashboardPage() {
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-4">
+              <div className="flex flex-col items-center gap-4 shrink-0">
                 <CanvasWrapper canvasRef={canvasRef} />
               </div>
             )}
-
+          </main>
+          
+          {canvasMode && (
+            <BrushModeLayout 
+              key={activeProject ? activeProject.id : userImage} 
+              initialProject={activeProject}
+            />
+          )}
+          
+          {!canvasMode && (
             <BottomBar
               onUploadClick={() => setUploadModalOpen(true)}
               onUploadItemClick={() => setItemUploadModalOpen(true)}
@@ -127,7 +171,7 @@ export default function DashboardPage() {
               canvasRef={canvasRef}
               disableGenerate={!userImage || !itemImage}
             />
-          </main>
+          )}
         </div>
       </div>
     </ProtectedRoute>

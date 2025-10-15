@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Tool, ModelType } from "../components/types/tool";
 import type { Bookmark } from "../components/types/bookmark";
+import { IBrush } from "../components/types/brush";
+import { sketchPencilBrush } from "./brushes";
+import { ProjectFile } from "../components/types/canvas";
 
 /* -------------------- Types -------------------- */
 export interface OutputImage {
@@ -22,8 +25,10 @@ interface OutputStoreState {
 interface ToolState {
   /* Core session */
   userImage: string | null;
+  previewImage: string | null;
   uploadedFile: File | null;
   isUploadModalOpen: boolean;
+  activeProject: ProjectFile | null;
 
   /* Item tools */
   itemImage: string | null;
@@ -46,7 +51,13 @@ interface ToolState {
   penColor: string;
   generatedItems: string[];
 
+  /* Brush Engine State */
+  canvasMode: boolean;
+  brush: IBrush;
+
   /* Actions */
+  setActiveProject: (project: ProjectFile | null) => void;
+  setPreviewImage: (img: string | null) => void;
   setUserImage: (img: string | null) => void;
   setUploadedFile: (file: File | null) => void;
   setUploadModalOpen: (val: boolean) => void;
@@ -77,6 +88,10 @@ interface ToolState {
 
   reset: () => void;
   clearPersistedImages: () => void;
+
+  /* Brush Engine Actions */
+  setCanvasMode: (val: boolean) => void;
+  setBrush: (brush: IBrush) => void;
 }
 
 interface EditToolState {
@@ -94,8 +109,10 @@ interface EditToolState {
 export const useToolStore = create<ToolState>((set) => ({
   /* Core session */
   userImage: null,
+  previewImage: null,
   uploadedFile: null,
   isUploadModalOpen: false,
+  activeProject: null,
 
   /* Item tools */
   itemImage: null,
@@ -118,8 +135,14 @@ export const useToolStore = create<ToolState>((set) => ({
   penColor: "#ff0000",
   generatedItems: [],
 
+  /* Brush Engine State */
+  canvasMode: false,
+  brush: sketchPencilBrush,
+
   /* Actions */
-  setUserImage: (img) => set({ userImage: img }),
+  setActiveProject: (project) => set({ activeProject: project }),
+  setPreviewImage: (img) => set({ previewImage: img }),
+  setUserImage: (img) => set({ userImage: img, previewImage: null, activeProject: null }),
   setUploadedFile: (file) => set({ uploadedFile: file }),
   setUploadModalOpen: (val) => set({ isUploadModalOpen: val }),
 
@@ -162,6 +185,8 @@ export const useToolStore = create<ToolState>((set) => ({
   reset: () =>
     set({
       userImage: null,
+      previewImage: null,
+      activeProject: null,
       uploadedFile: null,
       isUploadModalOpen: false,
       itemImage: null,
@@ -179,14 +204,25 @@ export const useToolStore = create<ToolState>((set) => ({
       maskOpacity: 1,
       penColor: "#ff0000",
       generatedItems: [],
+      canvasMode: false,
+      brush: sketchPencilBrush,
     }),
 
   clearPersistedImages: () => {
-    set({ userImage: null, itemImage: null });
+    set({ 
+      userImage: null, 
+      itemImage: null, 
+      previewImage: null, 
+      activeProject: null 
+    });
     if (typeof window !== "undefined") {
       localStorage.removeItem("tool-store");
     }
   },
+
+  /* Brush Engine Actions */
+  setCanvasMode: (val) => set({ canvasMode: val }),
+  setBrush: (brush) => set({ brush: brush }),
 }));
 
 /* -------------------- Edit Tool Store (Persisted) -------------------- */

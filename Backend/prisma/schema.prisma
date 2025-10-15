@@ -28,6 +28,7 @@ model User {
   @@index([phoneNumber])
   tattoos      Tattoo[]
   editGenerations EditGeneration[]
+  projects           Project[]
 
 }
 
@@ -78,6 +79,9 @@ model Generation {
   updatedAt      DateTime         @default(now()) @updatedAt @db.Timestamp(6)
   user           User?            @relation(fields: [userId], references: [id])
   assets         GenerationAsset[]
+
+  projectId      String?          @unique @db.Uuid
+  project        Project?         @relation(fields: [projectId], references: [id])
 }
 
 model GenerationAsset {
@@ -133,6 +137,22 @@ model EditAsset {
 
   createdAt        DateTime       @default(now())
   editGeneration   EditGeneration @relation(fields: [editGenerationId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid
+  baseImageSrc    String
+  previewImageUrl String
+  projectData     Json     
+  createdAt       DateTime @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime @default(now()) @updatedAt @db.Timestamp(6)
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  generation      Generation?
+
+  @@index([userId])
 }
 
 enum EditStatus {
