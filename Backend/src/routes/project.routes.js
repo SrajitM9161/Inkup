@@ -10,7 +10,10 @@ const upload = multer({ dest: 'Public/temp' });
 router.post(
   '/', 
   protect, 
-  upload.single('previewImage'), 
+  upload.fields([
+    { name: 'previewImage', maxCount: 1 },
+    { name: 'baseImage', maxCount: 1 }
+  ]), 
   saveProject
 );
 

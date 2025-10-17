@@ -13,11 +13,25 @@ import { ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { toast } from 'react-hot-toast';
 import { useCallback, useState } from 'react';
-import PromptBox from '../prompt/PromptBox'; 
+import PromptBox from '../prompt/PromptBox';
+import CanvasSizeModal from '../dashboard/Modals/CanvasSizeModal';
 
 interface BottomToolbarTopProps {
   canvasRef: React.RefObject<ReactSketchCanvasRef | null>;
 }
+
+const createBlankImageDataUrl = (width: number, height: number): string => {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#FFFFFF'; 
+    ctx.fillRect(0, 0, width, height); 
+  }
+  return canvas.toDataURL('image/png');
+};
+
 
 export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
   const {
@@ -28,6 +42,8 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
     strokeWidth,
     setStrokeWidth,
     setCanvasMode,
+    setUserImage,
+    setActiveProject,
   } = useToolStore();
 
   const [promptOpen, setPromptOpen] = useState(false);
@@ -39,15 +55,26 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
     if (userImage || previewImage) {
       setCanvasMode(true);
     } else {
-      console.log("TODO: Open Canvas Size Modal");
-      toast("Please upload an image to use as a canvas base first.");
+      setShowCanvasSizeModal(true);
     }
+  };
+
+  const handleCreateBlankCanvas = ({ width, height }: { width: number; height: number }) => {
+    const blankImage = createBlankImageDataUrl(width, height);
+    
+    setUserImage(blankImage);
+    
+    setActiveProject(null);
+    
+    setCanvasMode(true);
+
+    setShowCanvasSizeModal(false);
   };
 
   const handleStrokeWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStrokeWidth(Number(e.target.value));
   };
-
+  
   const handleDownload = useCallback(async () => {
     const imageToDownload = previewImage || userImage;
 
@@ -115,6 +142,7 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
     }
   };
 
+
   return (
     <>
       <div className="w-fit flex items-center justify-center gap-2 px-3.5 py-1.5 bg-[#1C1C1C] border border-[#333] rounded-lg">
@@ -151,6 +179,12 @@ export default function BottomToolbarTop({ canvasRef }: BottomToolbarTopProps) {
       </div>
 
       <PromptBox open={promptOpen} onClose={() => setPromptOpen(false)} />
+
+      <CanvasSizeModal
+        isOpen={showCanvasSizeModal}
+        onClose={() => setShowCanvasSizeModal(false)}
+        onConfirm={handleCreateBlankCanvas}
+      />
     </>
   );
 }

@@ -72,10 +72,15 @@ export default function BrushModeLayout({
       }
       const previewImageBase64 = await brushCanvasRef.current.exportToBase64();
       if (!previewImageBase64) { throw new Error('Failed to generate preview image.'); }
-      const response = await saveProject(projectDataPartial, previewImageBase64);
+      
+      const baseImageBase64 = projectDataPartial.baseImageSrc;
+
+      const response = await saveProject(projectDataPartial, previewImageBase64, baseImageBase64);
+      
       const savedProjectResponse = response.data;
       toast.dismiss();
       toast.success('Project saved!');
+      
       const updatedProjectFile: ProjectFile = {
           ...(initialProject || {}), ...projectDataPartial,
           id: savedProjectResponse._id || initialProject?.id,
