@@ -187,17 +187,21 @@ interface SaveProjectResponse {
   }
 }
 
-export const saveProject = async (projectData: Partial<ProjectFile>, previewImageBase64: string): Promise<SaveProjectResponse> => {
+export const saveProject = async (projectData: Partial<ProjectFile>, previewImageBase64: string, baseImageBase64: string): Promise<SaveProjectResponse> => {
   const previewImageFile = await base64ToFile(previewImageBase64, 'preview.png');
+  const baseImageFile = await base64ToFile(baseImageBase64, 'baseImage.png');
 
   const formData = new FormData();
 
   formData.append('previewImage', previewImageFile);
+  formData.append('baseImage', baseImageFile);
   
-  // The backend controller expects the 'projectData' to be the nested object.
-  // The getProjectData function in BrushCanvas is already creating this structure.
-  // We just need to stringify it.
-  formData.append('projectData', JSON.stringify(projectData.projectData));
+  if (projectData.projectData) {
+    const { baseImageSrc, ...restOfProjectData } = projectData.projectData;
+    formData.append('projectData', JSON.stringify(restOfProjectData));
+  } else {
+    formData.append('projectData', JSON.stringify({}));
+  }
 
   const response = await api.post('/api/user/projects', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
